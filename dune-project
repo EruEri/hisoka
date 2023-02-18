@@ -22,7 +22,7 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github EruEri/hisoka))
 
 (authors "EruEri")
 
@@ -34,10 +34,10 @@
 
 (package
  (name hisoka)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "An encrypted-file manager")
+; (description "A longer description")
  (depends ocaml dune cryptokit cmdliner yojson)
  (tags
-  (topics "to describe" your project)))
+  (file-manager encryption)))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
