@@ -1,0 +1,5 @@
+(executable
+ (public_name hisoka)
+ (name main)
+ (libraries hisoka cmdliner)
+ )
