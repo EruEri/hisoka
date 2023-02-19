@@ -1,5 +1,3 @@
-#include "caml/mlvalues.h"
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                            //
 // This file is part of Hisoka                                                                //
@@ -23,6 +21,7 @@
 #include "caml/misc.h"
 #include "caml/memory.h"
 #include "caml/alloc.h"
+#include "caml/mlvalues.h"
 #include <unistd.h>
 
 
