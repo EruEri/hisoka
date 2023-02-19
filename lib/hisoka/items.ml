@@ -15,20 +15,32 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
+
+module Item_Info = struct
+  type info = {
+    group: string option;
+    name: string;
+    extension: string
+  }[@@deriving yojson]
+
+  let create ?(group = None) ~extension name = 
+    {
+      group;
+      name;
+      extension
+    }
+end
+
 module Base_Item = struct
   type base_item = {
     id: int;
-    group: string option;
-    name: string;
-    extension: string;
+    info: Item_Info.info;
     data: string
   }[@@deriving yojson]
 
   let create ?(group = None) ~name ~extension data = {
     id = String.hash (name ^ extension ^ data);
-    group;
-    name;
-    extension;
+    info = Item_Info.create ~group ~extension name;
     data
   }
 
@@ -43,9 +55,7 @@ end
 module External_Item = struct
   type extern_item = {
     iv: string;
-    group: string option;
-    name: string;
-    extension: string;
+    info: Item_Info.info;
     encrypted_file_name: string
   }[@@deriving yojson]
 
@@ -53,9 +63,7 @@ module External_Item = struct
     let iv = match iv with Some iv -> iv | None -> Encryption.random_iv in
     {
       iv;
-      group;
-      name;
-      extension;
+      info = Item_Info.create ~group ~extension name;
       encrypted_file_name
     }
 

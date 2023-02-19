@@ -187,6 +187,65 @@ module Add_Cmd = struct
       
 end
 
+module List_Cmd = struct
+  let name = "list"
+
+  type cmd_list = {
+    group: string option; 
+  }
+
+  type t = cmd_list
+
+  let group_term = 
+    let info =
+      Arg.info ["g"; "group"]
+      ~docv:"GROUP"
+      ~doc:"List all the file belonging to $(SOURCE)"
+    in
+    Arg.value (Arg.opt (Arg.some Arg.string) None info)
+
+  let cmd_term run = 
+    let combine group = 
+      run @@ `List {group}
+    in
+    Term.(const combine
+      $ group_term
+    )
+
+    let cmd_doc = "Display the list of encrypted files"
+    let cmd_man = [
+      `S Manpage.s_description;
+      `P "Display the list of encrypted files";
+    ]
+
+    let cmd run =
+      let info =
+        Cmd.info name
+          ~doc:cmd_doc
+          ~man:cmd_man
+      in
+      Cmd.v info (cmd_term run)
+
+
+    let run cmd_list = 
+      let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+      let items_list = Manager.Manager.list_info manager in
+      let items_list = match cmd_list.group with
+      | None -> items_list
+      | Some _ as group -> 
+        items_list |> List.filter (fun item -> 
+          let open Items.Item_Info in
+          item.group = group
+        )
+      in
+      let () = items_list |> List.iter (fun info -> 
+        let open Items.Item_Info in
+        Printf.printf "group : %s, name : %s, extension : %s\n" (Option.value ~default:"null" info.group) info.name info.extension 
+      )  in
+      ()
+end
+
 
 
 module Hisoka_Cmd = struct
@@ -205,7 +264,8 @@ module Hisoka_Cmd = struct
       ~version
   let subcommands run = [
     Init_Cmd.cmd run;
-    Add_Cmd.cmd run
+    Add_Cmd.cmd run;
+    List_Cmd.cmd run;
   ]
 
 
@@ -213,6 +273,7 @@ module Hisoka_Cmd = struct
   function
   | `Init init_cmd -> Init_Cmd.run init_cmd
   | `Add add_cmd -> Add_Cmd.run add_cmd
+  | `List list_cmd -> List_Cmd.run list_cmd
 
   let parse run =
     Cmd.group root_info (subcommands run)

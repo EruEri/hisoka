@@ -112,6 +112,11 @@ module Manager = struct
 
   exception Existing_Files of commit list
 
+  let list_info manager = 
+    (manager.monolithic_manager.base_items |> List.map (fun bi -> bi.Items.Base_Item.info) )
+    @
+    (manager.external_manager.external_items |> List.map (fun ei -> ei.Items.External_Item.info) )
+
   let add_item_from_file ~monolithic ?(group = None) ~name ~extension ~file_name manager = 
     let file = In_channel.(open_gen [Open_rdonly; Open_binary] 0 file_name) in
     let content = Util.read_file file () in
