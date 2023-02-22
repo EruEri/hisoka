@@ -17,9 +17,11 @@
 
 type error = 
 | DecryptionError of string
+| Already_Existing_name of string
 
 let string_of_error = function
 | DecryptionError file -> Printf.sprintf "decrptytion error : %s" file
+| Already_Existing_name filename -> Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
 
 exception HisokaError of error
 

@@ -33,16 +33,16 @@ end
 
 module Base_Item = struct
   type base_item = {
-    id: int;
     info: Item_Info.info;
     data: string
   }[@@deriving yojson]
 
   let create ?(group = None) ~name ~extension data = {
-    id = String.hash (name ^ extension ^ data);
     info = Item_Info.create ~group ~extension name;
     data
   }
+
+  let compare lhs rhs = compare lhs.info rhs.info
 
   let to_string item =
   item |> base_item_to_yojson |> Yojson.Safe.to_string 
@@ -58,6 +58,8 @@ module External_Item = struct
     info: Item_Info.info;
     encrypted_file_name: string
   }[@@deriving yojson]
+
+  let compare lhs rhs = compare lhs.info rhs.info
 
   let create ?(iv) ?(group = None) ~name ~extension encrypted_file_name = 
     let iv = match iv with Some iv -> iv | None -> Encryption.random_iv in

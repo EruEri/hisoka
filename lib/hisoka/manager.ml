@@ -25,11 +25,21 @@ module External_Manager = struct
 
   let create = { external_items = [] }
 
-  let append item manager = {external_items = item::manager.external_items }
+  
+  (**
+    @returns: The manager extended with the items
+    @raise: [Hisoka_Error Already_Existing_name] if the id is already in the manager
+  *)
+  let append item manager = 
+    match List.find_opt (fun bitem -> bitem |> Items.External_Item.compare item |> ( = ) 0) manager.external_items with 
+    | None -> { external_items = item::manager.external_items }
+    | Some _ -> raise (Error.HisokaError (Error.Already_Existing_name item.info.name))
 
-  let append_list items manager = {
-    external_items = items |> List.fold_left (fun acc elt -> elt::acc) manager.external_items
-  }
+  let append_list items manager = 
+    items |> List.fold_left (fun acc elt -> 
+      append elt acc
+  ) manager
+  
 
   let to_string manager = 
     manager |> external_manager_to_yojson |> Yojson.Safe.to_string
@@ -56,14 +66,35 @@ module External_Manager = struct
 end
 
 module Monolitchic_Manager = struct
-
   let encryption_iv = String.init 12 (fun index -> Char.chr ( (index + 3) mod 256))
 
   type monolithic_manager = {
     base_items: Items.Base_Item.base_item list
   }[@@deriving yojson]
 
-  let append item manager = {base_items = item::manager.base_items }
+
+  (**
+    Append an item to the manager
+    @return: The manager extended with the items
+    @raise: [Hisoka_Error Already_Existing_name] if the id is already in the manager
+  *)
+  let append item manager = 
+    match List.find_opt (fun bitem -> bitem |> Items.Base_Item.compare item |> ( <> ) 0) manager.base_items with 
+    | None -> { base_items = item::manager.base_items }
+    | Some _ -> raise (Error.HisokaError (Error.Already_Existing_name item.info.name))
+
+
+  let replace item manager =
+  let replaced, items = manager.base_items |> List.fold_left_map (fun acc bitem ->
+    let find = Items.Base_Item.compare item bitem = 0 in
+    match find with
+    | true -> true, item
+    | false -> acc, bitem
+  ) false in
+  if replaced 
+    then { base_items = items }
+  else 
+    { base_items = item::items }
 
   let append_list items manager = {
     base_items = items |> List.fold_left (fun acc elt -> elt::acc) manager.base_items
@@ -75,9 +106,9 @@ module Monolitchic_Manager = struct
   let of_string bytes =
     bytes |> Yojson.Safe.from_string |> monolithic_manager_of_yojson 
 
-  let create = {base_items = [] }
+  let create = { base_items = [] }
 
-  let encrypt ~key  external_manager () = 
+  let encrypt ~key external_manager () = 
     let data = to_string external_manager in
     let where = App.AppLocation.hisoka_mono_file |> PathBuf.to_string |> Option.some in
     Encryption.encrypt ~where ~key ~iv:encryption_iv data ()
