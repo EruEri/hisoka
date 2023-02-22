@@ -52,6 +52,17 @@ module External_Manager = struct
     let where = App.AppLocation.hisoka_extern_config_file |> PathBuf.to_string |> Option.some in
     Encryption.encrypt ~where ~key ~iv:encryption_iv data ()
 
+    let filter ?(group = None) ~files manager = 
+      let open Items.Item_Info in 
+      let open Items.External_Item in
+    {
+      external_items = manager.external_items |> List.filter (fun eitem -> 
+        match group with
+        | Some _ -> group = eitem.info.group && files |> List.exists ( ( = ) eitem.info.name )
+        | None -> files |> List.exists ( ( = ) eitem.info.name )
+      )
+    }
+
   let decrypt ~key () =
     let path = PathBuf.to_string  App.AppLocation.hisoka_extern_config_file in
     match Encryption.decrpty_file ~key ~iv:encryption_iv path () with
@@ -108,6 +119,17 @@ module Monolitchic_Manager = struct
 
   let create = { base_items = [] }
 
+  let filter  ?(group = None) ~files manager = 
+  let open Items.Item_Info in 
+  let open Items.Base_Item in
+  {
+    base_items = manager.base_items |> List.filter (fun bitem -> 
+      match group with
+      | Some _ -> group = bitem.info.group && files |> List.exists ( ( = ) bitem.info.name )
+      | None -> files |> List.exists ( ( = ) bitem.info.name )
+    )
+  }
+
   let encrypt ~key external_manager () = 
     let data = to_string external_manager in
     let where = App.AppLocation.hisoka_mono_file |> PathBuf.to_string |> Option.some in
@@ -162,6 +184,47 @@ module Manager = struct
         else 
           let commit = { group; name; extension; plain_data = content} in
           { manager with register_external_change = commit::manager.register_external_change}
+
+  (**
+  @return: filter the manager by [group] and [files] 
+  *)
+  let fetch_group_files ?(group = None) ~files manager = 
+    {
+      manager with
+      external_manager = External_Manager.filter ~group ~files manager.external_manager;
+      monolithic_manager = Monolitchic_Manager.filter ~group ~files manager.monolithic_manager
+    }
+
+  (**
+    @return: Decrypt all the files encrypted in the manager:
+    @raise: [HisokaError Missing_file] if a file which was external encrypted is missing
+  *)
+  let decrypt_files ~dir_path ~key manager () =   
+    let () = manager.monolithic_manager.base_items |> List.iter (fun base_item -> 
+      let open Items.Base_Item in
+      let filepath = Filename.concat dir_path base_item.info.name in
+      Out_channel.with_open_bin filepath (fun oc -> 
+        Printf.fprintf oc "%s" base_item.data
+      )
+    ) in
+
+    let () = manager.external_manager.external_items |> List.iter (fun external_item -> 
+      let open Items.External_Item in
+      let outfile_path = Filename.concat dir_path external_item.info.name in
+      let input_files_data = PathBuf.to_string @@ PathBuf.push external_item.encrypted_file_name App.AppLocation.hisoka_data_dir in
+      let data = Encryption.decrpty_file ~key ~iv:external_item.iv input_files_data () in
+      match data with
+      | Error exn -> raise exn
+      | Ok (None) -> raise (Error.(HisokaError (DecryptionError input_files_data) ) )
+      | Ok (Some decrypted_data) ->
+        Out_channel.with_open_bin outfile_path (fun oc -> 
+          Printf.fprintf oc "%s" decrypted_data
+        )
+    ) in
+    ()
+
+  let is_empty manager = 
+    manager.monolithic_manager.base_items = [] && manager.external_manager.external_items = []
 
   let encrypt ~max_iter ~raise_on_conflicts ~key manager () = 
     let pathbuf = App.AppLocation.hisoka_data_dir in

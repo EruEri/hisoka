@@ -16,12 +16,17 @@
 (**********************************************************************************************)
 
 type error = 
+| No_file_to_decrypt
 | DecryptionError of string
 | Already_Existing_name of string
+| Missing_file of { true_name : string; encrypted_name: string}
+
 
 let string_of_error = function
+| No_file_to_decrypt -> Printf.sprintf "No File to decrypt"
 | DecryptionError file -> Printf.sprintf "decrptytion error : %s" file
 | Already_Existing_name filename -> Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
+| Missing_file {true_name; encrypted_name} -> Printf.sprintf "Filename: \"%s\" is missing: This file encrypted: \"%s\"" encrypted_name true_name
 
 exception HisokaError of error
 

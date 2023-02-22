@@ -126,7 +126,7 @@ module Add_Cmd = struct
       ~docv:"FILE"
       ~doc:"file to encrypt"
     in
-    Arg.required  ( Arg.pos  0 (Arg.some Arg.file) None info) 
+    Arg.required  ( Arg.pos  0 (Arg.some Arg.non_dir_file) None info) 
 
   let download_url_term = 
     let info = 
@@ -172,7 +172,6 @@ module Add_Cmd = struct
     let run cmd_add = 
       let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      let () = print_endline "decrypted" in
       let manager = if 
           Option.is_some cmd_add.download_url 
         then 
@@ -181,9 +180,8 @@ module Add_Cmd = struct
             let name, extension = Filename.basename cmd_add.file, Filename.extension cmd_add.file in 
             Manager.Manager.add_item_from_file ~monolithic:cmd_add.monolithic ~group:cmd_add.group ~name ~extension ~file_name:cmd_add.file manager
         in
-      let () = print_endline "appended" in
       let () = Manager.Manager.encrypt ~key:encrypted_key ~max_iter:3 ~raise_on_conflicts:true manager () in
-      Printf.printf "monolithic = %b: file = %s" cmd_add.monolithic cmd_add.file;
+      Printf.printf "File: \"%s\" Added\n" cmd_add.file;
       
 end
 
@@ -246,6 +244,72 @@ module List_Cmd = struct
       ()
 end
 
+module Decrypt_Cmd = struct
+  let name = "decrypt"
+
+  type cmd_decrypt = {
+    group: string option;
+    out_dir: string option;
+    files: string list;
+  }
+
+  type t = cmd_decrypt
+
+  let group_term = 
+    let info =
+      Arg.info ["g"; "group"]
+      ~docv:"GROUP"
+      ~doc:"Decrypt all the file belonging to GROUP"
+    in
+    Arg.value (Arg.opt (Arg.some Arg.string) None info)
+
+  let files_term = 
+    Arg.(non_empty & pos_all string [] & info [] ~docv:"FILES" ~doc:"Decrypt all the files")
+
+  let out_dir_term = 
+    Arg.(value & opt (some dir) None & info ~docv:"DIRECTORY" ["out-dir"]  )
+
+  let cmd_term run = 
+    let combine group files out_dir = 
+      run @@ `Decrypt {group; files; out_dir}
+    in
+    Term.(const combine
+      $ group_term
+      $ files_term
+      $ out_dir_term
+    )
+
+    let cmd_doc = "Decrypt encrypted files"
+    let cmd_man = [
+      `S Manpage.s_description;
+      `P "Decrypt encrypted files";
+    ]
+
+    let cmd run =
+      let info =
+        Cmd.info name
+          ~doc:cmd_doc
+          ~man:cmd_man
+      in
+      Cmd.v info (cmd_term run)
+
+    let run decrypt_cmd = 
+      let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+      let manager_filtered = Manager.Manager.fetch_group_files 
+        ~group:(decrypt_cmd.group)
+        ~files:decrypt_cmd.files
+        manager
+    in
+    match Manager.Manager.is_empty manager_filtered with
+    | false ->
+      let outdir = Option.value ~default:(Sys.getcwd ()) decrypt_cmd.out_dir in
+      let () = Manager.Manager.decrypt_files ~dir_path:outdir ~key:encrypted_key manager_filtered () in
+      ()
+    | true -> raise (Error.(HisokaError No_file_to_decrypt))
+
+end
+
 
 
 module Hisoka_Cmd = struct
@@ -266,6 +330,7 @@ module Hisoka_Cmd = struct
     Init_Cmd.cmd run;
     Add_Cmd.cmd run;
     List_Cmd.cmd run;
+    Decrypt_Cmd.cmd run;
   ]
 
 
@@ -274,6 +339,7 @@ module Hisoka_Cmd = struct
   | `Init init_cmd -> Init_Cmd.run init_cmd
   | `Add add_cmd -> Add_Cmd.run add_cmd
   | `List list_cmd -> List_Cmd.run list_cmd
+  | `Decrypt decrypt_cmd -> Decrypt_Cmd.run decrypt_cmd
 
   let parse run =
     Cmd.group root_info (subcommands run)
