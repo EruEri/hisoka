@@ -26,10 +26,10 @@ module External_Manager = struct
   let create = { external_items = [] }
 
   
-  (**
-    @returns: The manager extended with the items
-    @raise: [Hisoka_Error Already_Existing_name] if the id is already in the manager
-  *)
+(**
+    @return : The manager extended with the items
+    @raise Hisoka_Error.Already_Existing_name if the id is already in the manager
+*)
   let append item manager = 
     match List.find_opt (fun bitem -> bitem |> Items.External_Item.compare item |> ( = ) 0) manager.external_items with 
     | None -> { external_items = item::manager.external_items }
@@ -63,6 +63,29 @@ module External_Manager = struct
       )
     }
 
+  let exclude ?(group = None) ~files manager = 
+    let open Items.Item_Info in 
+    let open Items.External_Item in
+    
+    let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
+      match group with
+      | Some _ -> if not @@ ( group = eitem.info.group && files |> List.exists ( ( = ) eitem.info.name ) ) then Either.left eitem else Either.right eitem.info
+      | None -> if files |> List.exists ( ( = ) eitem.info.name ) |> not then Either.left eitem else Either.right eitem.info
+    ) in
+    {
+      external_items
+    }, deleted
+  let exclude_group ~group manager = 
+    let open Items.Item_Info in 
+    let open Items.External_Item in
+    let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
+      if eitem.info.group <> Some group then Either.left eitem else Either.right eitem.info
+    ) in 
+    {
+      external_items;
+    }, deleted
+
+
   let decrypt ~key () =
     let path = PathBuf.to_string  App.AppLocation.hisoka_extern_config_file in
     match Encryption.decrpty_file ~key ~iv:encryption_iv path () with
@@ -85,9 +108,8 @@ module Monolitchic_Manager = struct
 
 
   (**
-    Append an item to the manager
-    @return: The manager extended with the items
-    @raise: [Hisoka_Error Already_Existing_name] if the id is already in the manager
+    @returns : The manager extended with the items
+    @raise Hisoka_Error.Already_Existing_name if the id is already in the manager
   *)
   let append item manager = 
     match List.find_opt (fun bitem -> bitem |> Items.Base_Item.compare item |> ( <> ) 0) manager.base_items with 
@@ -129,6 +151,29 @@ module Monolitchic_Manager = struct
       | None -> files |> List.exists ( ( = ) bitem.info.name )
     )
   }
+
+  let exclude ?(group = None) ~files manager = 
+  let open Items.Item_Info in 
+  let open Items.Base_Item in
+  let base_items, deleted = manager.base_items |> List.partition_map (fun eitem -> 
+    match group with
+    | Some _ -> if not @@ ( group = eitem.info.group && files |> List.exists ( ( = ) eitem.info.name ) ) then Either.left eitem else Either.right eitem.info
+    | None -> if files |> List.exists ( ( = ) eitem.info.name ) |> not then Either.left eitem else Either.right eitem.info
+  ) in
+  {
+    base_items
+  }, deleted
+
+  let exclude_group ~group manager = 
+    let open Items.Item_Info in 
+    let open Items.Base_Item in
+
+    let base_items, deleted = manager.base_items |> List.partition_map (fun eitem -> 
+      if eitem.info.group <> Some group then Either.left eitem else Either.right eitem.info
+    ) in 
+    {
+      base_items;
+    }, deleted
 
   let encrypt ~key external_manager () = 
     let data = to_string external_manager in
@@ -185,9 +230,9 @@ module Manager = struct
           let commit = { group; name; extension; plain_data = content} in
           { manager with register_external_change = commit::manager.register_external_change}
 
-  (**
-  @return: filter the manager by [group] and [files] 
-  *)
+(**
+  @return : filter the manager by [group] and [files] 
+*)
   let fetch_group_files ?(group = None) ~files manager = 
     {
       manager with
@@ -196,8 +241,8 @@ module Manager = struct
     }
 
   (**
-    @return: Decrypt all the files encrypted in the manager:
-    @raise: [HisokaError Missing_file] if a file which was external encrypted is missing
+    @return Decrypt all the files encrypted in the manager:
+    @raise HisokaError.Missing_file if a file which was external encrypted is missing
   *)
   let decrypt_files ~dir_path ~key manager () =   
     let () = manager.monolithic_manager.base_items |> List.iter (fun base_item -> 
@@ -254,6 +299,25 @@ module Manager = struct
       ()
     ) in 
     ()
+
+    let remove ?(group = None) files manager = 
+      match group, files with
+      | Some g, [] -> 
+      let external_manager, ex_deleted = External_Manager.exclude_group ~group:g manager.external_manager in 
+      let monolithic_manager, mono_deleted = Monolitchic_Manager.exclude_group ~group:g manager.monolithic_manager in 
+      {
+        manager with
+        external_manager;
+        monolithic_manager;
+      }, ex_deleted @ mono_deleted
+      | _ -> 
+        let external_manager, ex_deleted = External_Manager.exclude ~group ~files manager.external_manager in 
+        let monolithic_manager, mono_deleted = Monolitchic_Manager.exclude ~group ~files manager.monolithic_manager in 
+        {
+          manager with
+          external_manager;
+          monolithic_manager;
+        }, ex_deleted @ mono_deleted
 
     let decrypt ~key () = 
       let monolithic = Monolitchic_Manager.decrypt ~key () in

@@ -72,9 +72,9 @@ module Init_Cmd = struct
       in
       let first_message = "Choose the master password : " in
       let confirm_message = "Confirm the master password : " in
-      let encrypted_key = match Pass.confirm_password_encrypted ~first_message ~confirm_message () with
+      let encrypted_key = match Input.confirm_password_encrypted ~first_message ~confirm_message () with
         | Ok encrypted_key -> encrypted_key
-        | Error exn -> raise (Pass.PassError exn) 
+        | Error exn -> raise (Input.PassError exn) 
       in
       create_folder ~on_error:(Create_folder hisoka_dir) hisoka_dir
       >>= fun hisoka_dir -> 
@@ -132,7 +132,7 @@ module Add_Cmd = struct
     let info = 
       Arg.info ["url"]
       ~docv:"URL"
-      ~doc:"Url of the file"
+      ~doc:"Url of the file. \nurl option will download the file at the address $(opt) and save it as FILE"
     in
     Arg.value (Arg.opt (Arg.some Arg.string) None info )
 
@@ -170,7 +170,7 @@ module Add_Cmd = struct
       Cmd.v info (cmd_term run)
 
     let run cmd_add = 
-      let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let manager = if 
           Option.is_some cmd_add.download_url 
@@ -226,7 +226,7 @@ module List_Cmd = struct
 
 
     let run cmd_list = 
-      let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let items_list = Manager.Manager.list_info manager in
       let items_list = match cmd_list.group with
@@ -294,7 +294,7 @@ module Decrypt_Cmd = struct
       Cmd.v info (cmd_term run)
 
     let run decrypt_cmd = 
-      let encrypted_key = Pass.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let manager_filtered = Manager.Manager.fetch_group_files 
         ~group:(decrypt_cmd.group)
@@ -310,11 +310,91 @@ module Decrypt_Cmd = struct
 
 end
 
+module Delete_Cmd = struct
+  let name = "delete"
+
+  type cmd_delete = {
+    group: string option;
+    files: string list;
+  }
+
+  type t = cmd_delete
+
+  let files_term = 
+    Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete")
+
+  let group_term = 
+    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Delete files belonging to GROUP. If no$(b, FILES) is provided, $(opt) will delete all$(b, FILES) in $(dovcv) and the group $(docv)" )
+
+  let cmd_term run = 
+      let combine group files = 
+        run @@ `Delete {group; files}
+      in
+      Term.(const combine
+        $ group_term
+        $ files_term
+      )
+
+  let cmd_doc = "Delete files from hisoka"
+
+    let cmd_man = [
+      `S Manpage.s_description;
+      `P "Delete files";
+    ]
+
+    let cmd run =
+      let info =
+        Cmd.info name
+          ~doc:cmd_doc
+          ~man:cmd_man
+      in
+      Cmd.v info (cmd_term run)
+
+    let run delete_cmd =
+      let delete_all_in_group = Option.is_some delete_cmd.group && delete_cmd.files = [] in
+      let () = if delete_all_in_group then
+        let continue = Input.confirm_choice ~continue_on_wrong_input:(Input.Continue (Some "Wrong input") ) ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:(Printf.sprintf "Are you sure about deleting all files in group : %s" (Option.get delete_cmd.group) ) () in
+        if not continue then 
+          raise Error.(HisokaError No_Option_choosen)
+      in
+      let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
+      let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+      let filtered_manager, deleted_files_info = Manager.Manager.remove ~group:delete_cmd.group delete_cmd.files manager in
+      match deleted_files_info with
+      | [] -> print_endline "No files to delete"
+      | deleted_files_info ->
+        let string_of_files = let open Items.Item_Info in (deleted_files_info |> List.map (fun {name; _} -> name) |> String.concat ", ")  in
+        let deleting_file_format = 
+          Printf.sprintf "Following files will be deleted : %s " string_of_files
+        in
+        let confirmed_deletion = Input.confirm_choice ~continue_on_wrong_input:(Input.Continue (Some "Wrong input") ) ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:deleting_file_format () in
+        if confirmed_deletion then
+          let () = Manager.Manager.encrypt ~max_iter:3 ~raise_on_conflicts:true ~key:encrypted_key filtered_manager () in
+          Printf.printf "Deleted : %s\n" string_of_files
+        else
+          raise Error.(HisokaError No_Option_choosen)
+      
+
+end
+
 
 
 module Hisoka_Cmd = struct
   let version = "alpha"
   let root_doc = "the file hidder"
+
+  (* type t = bool
+
+  let change_term = Arg.(value & flag & info ["change-master-password"] ~doc:"Change the master password")
+
+  let cmd_term run = 
+    let combine change = 
+      run @@ change
+    in
+    Term.(const combine
+      $ change_term
+    ) *)
+
 
   let root_man = [
     `S Manpage.s_description;
@@ -331,6 +411,7 @@ module Hisoka_Cmd = struct
     Add_Cmd.cmd run;
     List_Cmd.cmd run;
     Decrypt_Cmd.cmd run;
+    Delete_Cmd.cmd run;
   ]
 
 
@@ -340,6 +421,7 @@ module Hisoka_Cmd = struct
   | `Add add_cmd -> Add_Cmd.run add_cmd
   | `List list_cmd -> List_Cmd.run list_cmd
   | `Decrypt decrypt_cmd -> Decrypt_Cmd.run decrypt_cmd
+  | `Delete delete_cmd -> Delete_Cmd.run delete_cmd
 
   let parse run =
     Cmd.group root_info (subcommands run)

@@ -16,6 +16,7 @@
 (**********************************************************************************************)
 
 type error = 
+| No_Option_choosen
 | No_file_to_decrypt
 | DecryptionError of string
 | Already_Existing_name of string
@@ -23,6 +24,7 @@ type error =
 
 
 let string_of_error = function
+| No_Option_choosen -> "Operation Aborted"
 | No_file_to_decrypt -> Printf.sprintf "No File to decrypt"
 | DecryptionError file -> Printf.sprintf "decrptytion error : %s" file
 | Already_Existing_name filename -> Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
