@@ -1,6 +1,6 @@
 # Hisoka
 
-Hisoka (ひそか) or hidden/private in english is a minimalist file manager that store file by encrypting them.
+Hisoka (ひそか) or hidden/private in japanese is a minimalist file manager that store file by encrypting them.
 
 ## How to use
 
