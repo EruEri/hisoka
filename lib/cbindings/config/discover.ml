@@ -1,10 +1,18 @@
 module C = Configurator.V1
 
-let chafa_cflag = "cflags_chafa.sexp"
-let chafa_clib = "clibrary_flags_chafa.sexp"
+let cflag = Printf.sprintf "cflags_%s.sexp"
+let clibs = Printf.sprintf "clibrary_flags_%s.sexp"
 
-let ncursesw_cflag = "cflags_ncursesw.sexp"
-let ncursesw_clib = "clibrary_flags_ncursesw.sexp"
+let generate_flag_libs name = 
+  cflag name, clibs name
+
+
+let chafa_cflag, chafa_clib = generate_flag_libs "chafa"
+
+let ncursesw_cflag, ncursesw_clib = generate_flag_libs "ncursesw"
+
+let magicwand_cflag, magicwand_clib = generate_flag_libs "MagickWand"
+
 
 
 
@@ -26,4 +34,5 @@ let pkg_config ~cflags ~clibs ~libname () =
 
 let () = pkg_config ~cflags:chafa_cflag ~clibs:chafa_clib ~libname:"chafa" ()
 let () = pkg_config ~cflags:ncursesw_cflag ~clibs:ncursesw_clib ~libname:"ncursesw" ()
+let () = pkg_config ~cflags:magicwand_cflag ~clibs:magicwand_clib ~libname:"MagickWand" ()
 (* let () = pkg_config ~libname:"ncursesw" () *)

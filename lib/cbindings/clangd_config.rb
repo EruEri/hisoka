@@ -6,7 +6,7 @@ def failwith(message)
     exit 1
 end
 
-command = "pkg-config --cflags chafa ncursesw"
+command = "pkg-config --cflags chafa ncursesw MagickWand"
 
 stdout, status = Open3.capture2(command)
 

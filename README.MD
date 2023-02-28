@@ -100,6 +100,7 @@ There are other subcommands but those 3 explain pretty much how hisoka works.
 - You will also need to install those C libraries:
   - [Chafa](https://github.com/hpjansson/chafa)
   - [Ncurses](https://invisible-island.net/ncurses/ncurses.html)
+  - [ImageMagick](https://github.com/imagemagick/imagemagick)
     
     The C libraries must be able to be found by **pkg-config**
 

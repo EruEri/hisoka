@@ -21,5 +21,5 @@ module Input = struct
 end
 
 module Chafa_Test = struct
-  external chafa_display: bytes -> int -> unit -> unit = "caml_chafa_test"
+  external chafa_display: string -> unit -> unit = "caml_chafa_test"
 end

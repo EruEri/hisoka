@@ -23,17 +23,19 @@
     (flags 
       (:include cflags_chafa.sexp) 
       (:include cflags_ncursesw.sexp)
+      (:include cflags_MagickWand.sexp)
     )
   )
   (c_library_flags 
     (:include clibrary_flags_chafa.sexp)
     (:include clibrary_flags_ncursesw.sexp)
+    (:include clibrary_flags_MagickWand.sexp)
   )
 )
 
 
 (rule
-  (targets cflags_chafa.sexp clibrary_flags_chafa.sexp cflags_ncursesw.sexp clibrary_flags_ncursesw.sexp)
+  (targets cflags_chafa.sexp clibrary_flags_chafa.sexp cflags_ncursesw.sexp clibrary_flags_ncursesw.sexp cflags_MagickWand.sexp clibrary_flags_MagickWand.sexp)
   (action  (run ./config/discover.exe))
 )
 

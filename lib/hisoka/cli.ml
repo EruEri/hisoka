@@ -416,9 +416,7 @@ module Chafa_Test = struct
       Cmd.v info (cmd_term run)
 
       let run {file} = 
-        let content = In_channel.with_open_bin file (fun ic -> Util.read_file ic () ) |> String.to_bytes in
-        let len = Bytes.length content in
-        let () = Cbindings.Chafa_Test.chafa_display content len () in
+        let () = Cbindings.Chafa_Test.chafa_display file () in
         ()
 end
 
