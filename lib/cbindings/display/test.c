@@ -16,7 +16,7 @@ CAMLprim value caml_chafa_test(value bytes, value len, value unit) {
     CAMLparam3(bytes, len, unit);
 
     const unsigned char* pixels = (unsigned char*) String_val(bytes);
-    const uint64_t clen = Long_val(len);
+    const int64_t clen = Long_val(len);
 
     ChafaCanvas* canvas =  chafa_canvas_new(NULL);
 

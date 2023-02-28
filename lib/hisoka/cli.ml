@@ -116,7 +116,7 @@ module Add_Cmd = struct
   let monolithic_term =
     let info = 
       Arg.info ["m"; "mono"; "monolithic"]
-      ~doc:"Whenever the encrypted should be merge within one big file containing others encrypted file"
+      ~doc:"whether the encrypted file should be merge within one big file containing others encrypted file"
     in
     Arg.value (Arg.flag info)
 
@@ -175,7 +175,7 @@ module Add_Cmd = struct
       let manager = if 
           Option.is_some cmd_add.download_url 
         then 
-          failwith "Downlaod urn not done" 
+          failwith "Downlaod url not done" 
           else 
             let name, extension = Filename.basename cmd_add.file, Filename.extension cmd_add.file in 
             Manager.Manager.add_item_from_file ~monolithic:cmd_add.monolithic ~group:cmd_add.group ~name ~extension ~file_name:cmd_add.file manager
@@ -259,7 +259,7 @@ module Decrypt_Cmd = struct
     let info =
       Arg.info ["g"; "group"]
       ~docv:"GROUP"
-      ~doc:"Decrypt all the file belonging to GROUP"
+      ~doc:"Decrypt all files belonging to GROUP"
     in
     Arg.value (Arg.opt (Arg.some Arg.string) None info)
 
@@ -267,7 +267,14 @@ module Decrypt_Cmd = struct
     Arg.(non_empty & pos_all string [] & info [] ~docv:"FILES" ~doc:"Decrypt all the files")
 
   let out_dir_term = 
-    Arg.(value & opt (some dir) None & info ~docv:"DIRECTORY" ["out-dir"]  )
+    Arg.(value 
+      & opt (some dir) None 
+      & info 
+        ~docv:"DIRECTORY" 
+        ~absent:"current directory" 
+        ~doc:"Write decrypted files in the given $(b,DIRECTORY)" 
+        ["out-dir"] 
+    )
 
   let cmd_term run = 
     let combine group files out_dir = 

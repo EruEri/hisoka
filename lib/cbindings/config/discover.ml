@@ -1,9 +1,14 @@
 module C = Configurator.V1
 
-let outcflag = "c_flags.sexp"
-let out_clib = "c_library_flags.sexp"
+let chafa_cflag = "cflags_chafa.sexp"
+let chafa_clib = "clibrary_flags_chafa.sexp"
 
-let pkg_config ~libname () = 
+let ncursesw_cflag = "cflags_ncursesw.sexp"
+let ncursesw_clib = "clibrary_flags_ncursesw.sexp"
+
+
+
+let pkg_config ~cflags ~clibs ~libname () = 
   C.main ~name:libname (fun c ->
     let conf =
       match C.Pkg_config.get c with
@@ -15,9 +20,10 @@ let pkg_config ~libname () =
     in
 
     (* let () = Printf.eprintf "Pkg out = [%s]\n" (String.concat ", " conf.cflags) in  *)
-    C.Flags.write_sexp outcflag conf.cflags;
-    C.Flags.write_sexp out_clib conf.libs
+    C.Flags.write_sexp cflags conf.cflags;
+    C.Flags.write_sexp clibs conf.libs
   )
 
-let () = pkg_config ~libname:"chafa" ()
+let () = pkg_config ~cflags:chafa_cflag ~clibs:chafa_clib ~libname:"chafa" ()
+let () = pkg_config ~cflags:ncursesw_cflag ~clibs:ncursesw_clib ~libname:"ncursesw" ()
 (* let () = pkg_config ~libname:"ncursesw" () *)

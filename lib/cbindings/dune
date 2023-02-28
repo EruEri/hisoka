@@ -20,14 +20,20 @@
 (library
  (name cbindings)
   (foreign_stubs (language c) (names input test)
-  (flags (:include c_flags.sexp))
+    (flags 
+      (:include cflags_chafa.sexp) 
+      (:include cflags_ncursesw.sexp)
+    )
   )
-  (c_library_flags (:include c_library_flags.sexp))
+  (c_library_flags 
+    (:include clibrary_flags_chafa.sexp)
+    (:include clibrary_flags_ncursesw.sexp)
+  )
 )
 
 
 (rule
-  (targets c_flags.sexp c_library_flags.sexp)
+  (targets cflags_chafa.sexp clibrary_flags_chafa.sexp cflags_ncursesw.sexp clibrary_flags_ncursesw.sexp)
   (action  (run ./config/discover.exe))
 )
 
