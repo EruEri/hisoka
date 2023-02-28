@@ -19,3 +19,7 @@
 module Input = struct
   external getpass: string -> unit -> string = "caml_get_pass"
 end
+
+module Chafa_Test = struct
+  external chafa_display: bytes -> int -> unit -> unit = "caml_chafa_test"
+end

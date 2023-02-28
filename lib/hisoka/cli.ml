@@ -324,7 +324,7 @@ module Delete_Cmd = struct
     Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete")
 
   let group_term = 
-    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Delete files belonging to GROUP. If no$(b, FILES) is provided, $(opt) will delete all$(b, FILES) in $(dovcv) and the group $(docv)" )
+    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Delete files belonging to GROUP. If no$(b, FILES) is provided, $(opt) will delete all$(b, FILES) in $(docv)")
 
   let cmd_term run = 
       let combine group files = 
@@ -378,6 +378,44 @@ module Delete_Cmd = struct
 end
 
 
+module Chafa_Test = struct
+  type test_cmd = {
+    file: string
+  }
+
+  let file_term = Arg.(required & pos 0 (some file) None & info ~doc:"Path to the picture file" [] )
+
+  let cmd_term run = 
+    let combine file = 
+      run @@ `CTest {file}
+    in
+    Term.(const combine
+      $ file_term
+    )
+
+    let cmd_doc = "Test Chafa"
+
+    let cmd_man = [
+      `S Manpage.s_description;
+      `P "Test Chafa output";
+    ]
+
+    let cmd run =
+      let info =
+        Cmd.info "chafa"
+          ~doc:cmd_doc
+          ~man:cmd_man
+      in
+      Cmd.v info (cmd_term run)
+
+      let run {file} = 
+        let content = In_channel.with_open_bin file (fun ic -> Util.read_file ic () ) |> String.to_bytes in
+        let len = Bytes.length content in
+        let () = Cbindings.Chafa_Test.chafa_display content len () in
+        ()
+end
+
+
 
 module Hisoka_Cmd = struct
   let version = "alpha"
@@ -412,6 +450,7 @@ module Hisoka_Cmd = struct
     List_Cmd.cmd run;
     Decrypt_Cmd.cmd run;
     Delete_Cmd.cmd run;
+    Chafa_Test.cmd run;
   ]
 
 
@@ -422,6 +461,7 @@ module Hisoka_Cmd = struct
   | `List list_cmd -> List_Cmd.run list_cmd
   | `Decrypt decrypt_cmd -> Decrypt_Cmd.run decrypt_cmd
   | `Delete delete_cmd -> Delete_Cmd.run delete_cmd
+  | `CTest chafa_cmd -> Chafa_Test.run chafa_cmd
 
   let parse run =
     Cmd.group root_info (subcommands run)
