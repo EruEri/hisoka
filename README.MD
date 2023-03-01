@@ -8,7 +8,7 @@ Hisoka (ひそか) or hidden/private in japanese is a minimalist file manager th
 
 To start with hisoka, you first need to initialize it.
 
-```sh
+```
 $ hisoka init --help
 NAME
        hisoka-init - Initialise hisoka app
@@ -31,7 +31,7 @@ The global varible ```$HOME``` must be set.
 
 ### - **Add**
 To add a file, use the ```add``` subcommand
-```sh
+```
 $ hisoka add --help
 NAME
        hisoka-add - Add file to hisoka
@@ -64,7 +64,7 @@ Also, each file can be added in a group which allow to later filter by the group
 
 ### - **Decrypt**
 To restore encrypted files, use the ```decrypt``` subcommand
-```sh
+```
 $ hisoka decrypt --help
 NAME
        hisoka-decrypt - Decrypt encrypted files
@@ -101,8 +101,9 @@ There are other subcommands but those 3 explain pretty much how hisoka works.
   - [Chafa](https://github.com/hpjansson/chafa)
   - [Ncurses](https://invisible-island.net/ncurses/ncurses.html)
   - [ImageMagick](https://github.com/imagemagick/imagemagick)
+    - ImageMagick >= 7.0.0
     
-    The C libraries must be able to be found by **pkg-config**
+  The C libraries must be able to be found by **pkg-config**
 
 - And finally:
   ```sh

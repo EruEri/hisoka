@@ -24,6 +24,7 @@
       (:include cflags_chafa.sexp) 
       (:include cflags_ncursesw.sexp)
       (:include cflags_MagickWand.sexp)
+      (-fPIC)
     )
   )
   (c_library_flags 
