@@ -19,7 +19,7 @@
 
 (library
  (name cbindings)
-  (foreign_stubs (language c) (names input test)
+  (foreign_stubs (language c) (names input test curses)
     (flags 
       (:include cflags_chafa.sexp) 
       (:include cflags_ncursesw.sexp)
