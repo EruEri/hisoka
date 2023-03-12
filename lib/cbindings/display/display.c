@@ -1,4 +1,3 @@
-#include <signal.h>
 #define CAML_NAME_SPACE
 
 #include <chafa.h>
@@ -162,6 +161,13 @@ void next_line(unsigned int current_line) {
     fflush(stdout);
 }
 
+void redraw_empty(const struct winsize* w){
+    set_cursor_at(0, 0);
+    for (unsigned int i = 0; i < w->ws_col * w->ws_row; i += 1) {
+        draw_char(' ');
+    } 
+}
+
 void draw_first_line(const char* title, const struct winsize *w, int endline) {
     size_t title_len = strlen(title);
     draw_string(UPPER_LEFT_CORNER);
@@ -210,7 +216,8 @@ void draw_middle_line(const struct winsize *w, unsigned int row, int endline) {
 }
 
 void draw_error_message(const struct winsize *w, const char* message) {
-    set_cursor_at(w->ws_row / 2 , w->ws_col / 2);
+    size_t message_len = strlen(message);
+    set_cursor_at(w->ws_row / 2 , (w->ws_col / 2) - (message_len / 2) );
     draw_string(message);
 }
 
@@ -357,6 +364,14 @@ MagickWand* create_wand_of_image(image_t image) {
     return magick_wand;
 }
 
+void redraw_main_window(const char* title, int n, int outof, const struct winsize *w) {
+    if (w) {
+        redraw_empty(w);
+    }
+    set_cursor_at(0, 0);
+    draw_main_window(title, n, outof);
+}
+
 exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, const image_t* image, const size_t current_image_index, const size_t nbimage) {
     if (!magick_wand) return MAGICKNULL;
 
@@ -374,8 +389,7 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
         return MAGICK_EXPORT_FAIl;
     }
     // clear();
-    set_cursor_at(0, 0);
-    draw_main_window(image->image_name, current_image_index, nbimage);
+    redraw_main_window(image->image_name, current_image_index, nbimage, NULL);
     draw_image(w, ITERM, image_width, image_height, row_stride, pixels);
 
 
@@ -391,7 +405,7 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
     size_t nbimage = Long_val(list_len);
     size_t current_image_index = 0;
     size_t previous_image_index = nbimage;
-    printf("c len = %lu\n", nbimage);
+    // printf("c len = %lu\n", nbimage);
     pixel_mode_t pmode = Int_val(mode);
     int RUNNING = 1;
     image_array_t* image_array = create_image_array(nbimage);
@@ -419,6 +433,9 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
                 }
                 current = tmp;
                 exit_status_t status = draw_image_wand(&w, current, &im, current_image_index, nbimage);
+            } else {
+                redraw_main_window(im.image_name, current_image_index, nbimage, &w);
+                draw_error_message(&w, NO_IMAGE_FILE);
             }
         }
         int _ = read(STDIN_FILENO, &c, 1);

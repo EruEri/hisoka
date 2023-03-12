@@ -37,17 +37,3 @@
   (targets cflags_chafa.sexp clibrary_flags_chafa.sexp cflags_MagickWand.sexp clibrary_flags_MagickWand.sexp)
   (action  (run ./config/discover.exe))
 )
-
-; (library
-;  (name            mylib)
-;  (public_name     mylib)
-;  (libraries       re lwt)
-;  (foreign_stubs
-;   (language c)
-;   (names mystubs)
-;   (flags (:include c_flags.sexp)))
-;  (c_library_flags (:include c_library_flags.sexp)))
-
-; (rule
-;  (targets c_flags.sexp c_library_flags.sexp)
-;  (action  (run ./config/discover.exe)))
