@@ -4,15 +4,14 @@
 #include <caml/mlvalues.h>
 #include "caml/memory.h"
 #include "caml/misc.h"
-#include <stdint.h>
 #include <MagickWand/MagickWand.h>
 #include "MagickCore/magick-type.h"
 #include "MagickCore/pixel.h"
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <string.h>
 
 #define RGBA "RGBA"
@@ -94,12 +93,31 @@ void move_forward_column(unsigned int c) {
     fflush(stdout);
 }
 
+struct termios raw;
+struct termios orig_termios;
+
+void enableRawMode() {
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    struct termios raw = orig_termios;
+  
+    raw.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void disableRawMode() {
+  raw.c_lflag |= (ECHO | ICANON);  
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
 void start_window() {
+    enableRawMode();
     write(STDOUT_FILENO, NEW_SCREEN_BUFF_SEQ, strlen(NEW_SCREEN_BUFF_SEQ));
+    
 }
 
 void end_window() {
     write(STDOUT_FILENO, END_SRCEEN_BUFF_SEQ, strlen(END_SRCEEN_BUFF_SEQ));
+    disableRawMode();
 }
 
 void draw_vertical_line() {
@@ -332,6 +350,7 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
         return MAGICK_EXPORT_FAIl;
     }
     clear();
+    set_cursor_at(0, 0);
     draw_main_window(image->image_name, current_image_index, nbimage);
     draw_image(w, ITERM, image_width, image_height, row_stride, pixels);
 
@@ -358,6 +377,7 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
     draw_main_window("hisoka", current_image_index, nbimage);
     MagickWandGenesis();
     MagickWand* current = NULL;
+    char c;
     image_t im;
     while (RUNNING) {
         struct winsize w;
@@ -374,7 +394,7 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
                 exit_status_t status = draw_image_wand(&w, current, &im, current_image_index, nbimage);
             }
         }
-        int c = fgetc(stdin);
+        int _ = read(STDIN_FILENO, &c, 1);
         switch (c) {
             case 'q': {
                 RUNNING = 0;
