@@ -215,6 +215,34 @@ module Manager = struct
     @
     (manager.external_manager.external_items |> List.map (fun ei -> ei.Items.External_Item.info) )
 
+  (**
+      @raise HisokaError.Missing_file if a file which was external encrypted is missing
+  *)
+  let list_name_data ?(group = None) ~key manager = 
+    (manager.monolithic_manager.base_items |> List.filter_map (fun bi ->
+      let open Items.Base_Item in
+      match group with
+      | None -> Some (bi.info.name, bi.data)
+      | Some g -> 
+        if bi.info.group = Some g then Some (bi.info.name, bi.data)
+        else None
+    ))
+    |> List.rev_append
+    (manager.external_manager.external_items |> List.filter_map (fun ei ->
+      let open Items.External_Item in
+      let input_files_data = PathBuf.to_string @@ PathBuf.push ei.encrypted_file_name App.AppLocation.hisoka_data_dir in
+      let data = Encryption.decrpty_file ~key ~iv:ei.iv input_files_data () in
+      match data with
+      | Error exn -> raise exn
+      | Ok (None) -> raise (Error.(HisokaError (DecryptionError input_files_data) ) )
+      | Ok (Some decrypted_data) -> begin match group with
+        | None -> Some (ei.info.name, decrypted_data)
+        | Some g ->
+          if ei.info.group = Some g then Some (ei.info.name, decrypted_data)
+          else None
+      end
+    ))
+
   let add_item_from_file ~monolithic ?(group = None) ~name ~extension ~file_name manager = 
     let file = In_channel.(open_gen [Open_rdonly; Open_binary] 0 file_name) in
     let content = Util.read_file file () in
