@@ -438,7 +438,7 @@ module Display_Cmd = struct
 
   let cmd_man = [
     `S Manpage.s_description;
-    `P "Display files";
+    `P "Display allows you to show files within hisoka directly in the terminal";
   ]
 
   let cmd run =
