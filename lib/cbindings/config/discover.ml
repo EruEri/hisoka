@@ -1,3 +1,20 @@
+(**********************************************************************************************)
+(*                                                                                            *)
+(* This file is part of Hisoka                                                                *)
+(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(*                                                                                            *)
+(* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
+(* of the GNU General Public License as published by the Free Software Foundation,            *)
+(* either version 3 of the License, or (at your option) any later version.                    *)
+(*                                                                                            *)
+(* Hisoka is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;        *)
+(* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR           *)
+(* PURPOSE.  See the GNU General Public License for more details.                             *)
+(* You should have received a copy of the GNU General Public License along with Hisoka.       *)
+(* If not, see <http://www.gnu.org/licenses/>.                                                *)
+(*                                                                                            *)
+(**********************************************************************************************)
+
 module C = Configurator.V1
 
 let cflag = Printf.sprintf "cflags_%s.sexp"
@@ -9,7 +26,7 @@ let generate_flag_libs name =
 
 let chafa_cflag, chafa_clib = generate_flag_libs "chafa"
 
-let ncursesw_cflag, ncursesw_clib = generate_flag_libs "ncursesw"
+(* let ncursesw_cflag, ncursesw_clib = generate_flag_libs "ncursesw" *)
 
 let magicwand_cflag, magicwand_clib = generate_flag_libs "MagickWand"
 
@@ -33,6 +50,5 @@ let pkg_config ~cflags ~clibs ~libname () =
   )
 
 let () = pkg_config ~cflags:chafa_cflag ~clibs:chafa_clib ~libname:"chafa" ()
-let () = pkg_config ~cflags:ncursesw_cflag ~clibs:ncursesw_clib ~libname:"ncursesw" ()
 let () = pkg_config ~cflags:magicwand_cflag ~clibs:magicwand_clib ~libname:"MagickWand" ()
 (* let () = pkg_config ~libname:"ncursesw" () *)

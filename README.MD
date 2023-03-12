@@ -87,6 +87,34 @@ OPTIONS
            Write decrypted files in the given DIRECTORY
 ```
 
+### - **Display**
+To directly show image files in your terminal, use the ```display``` subcommand
+
+Use 'l' to switch to the next image, 'j' for the previous one and 'q' to quit. 
+```
+NAME
+       hisoka-display - Display files in the terminals
+
+SYNOPSIS
+       hisoka display [--group=GROUP] [--mode[=Pixel Mode]] [OPTION]… [FILES]…
+
+DESCRIPTION
+       Display allows you to show files within hisoka directly into the
+       terminal
+
+ARGUMENTS
+       FILES
+           Files to display
+
+OPTIONS
+       -g GROUP, --group=GROUP
+           Render files belonging to GROUP
+
+       -m [Pixel Mode], --mode[=Pixel Mode] (default=none) (required)
+           Specify the pixel mode to use to render the image. one of 'iterm',
+           'kitty', 'sixel' or 'none'
+```
+
 ### - **Other**
 There are other subcommands but those 3 explain pretty much how hisoka works.
 
@@ -99,7 +127,6 @@ There are other subcommands but those 3 explain pretty much how hisoka works.
 
 - You will also need to install those C libraries:
   - [Chafa](https://github.com/hpjansson/chafa)
-  - [Ncurses](https://invisible-island.net/ncurses/ncurses.html)
   - [ImageMagick](https://github.com/imagemagick/imagemagick)
     - ImageMagick >= 7.0.0
     

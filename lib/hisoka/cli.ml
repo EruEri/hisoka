@@ -384,6 +384,80 @@ module Delete_Cmd = struct
 
 end
 
+module Display_Cmd = struct
+  let name = "display"
+
+  type display_cmd = {
+    pixel_mode: Cbindings.Display.pixel_mode;
+    group: string option;
+    files: string list;
+  }
+
+  let pixel_modes =
+    [ 
+      ("iterm", Cbindings.Display.Iterm); 
+      ("kitty", Cbindings.Display.Kitty); 
+      ("sixel", Cbindings.Display.SIXEL); 
+      ("none", Cbindings.Display.NONE);  
+    ]
+
+  let files_term = 
+    Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to display")
+
+  let pixel_mode = Arg.(
+      required
+      & opt ~vopt:(Some Cbindings.Display.NONE) (some & enum pixel_modes) (Some Cbindings.Display.NONE)
+      & info ~docv:"Pixel Mode"
+          ~doc:("Specify the pixel mode to use to render the image. " ^ doc_alts_enum ~quoted:true pixel_modes)
+          [ "m"; "mode" ])
+
+
+  let group_term = 
+    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Render files belonging to GROUP")
+
+  let cmd_term run = 
+    let combine pixel_mode group files = 
+      run @@ `Display {pixel_mode; group; files}
+    in
+    Term.(const combine
+      $ pixel_mode
+      $ group_term
+      $ files_term
+    )
+
+  let group_term = 
+    let info =
+      Arg.info ["g"; "group"]
+      ~docv:"GROUP"
+      ~doc:"List all the file belonging to $(SOURCE)"
+    in
+    Arg.value (Arg.opt (Arg.some Arg.string) None info)
+
+
+  let cmd_doc = "Display files in the terminals"
+
+  let cmd_man = [
+    `S Manpage.s_description;
+    `P "Display allows you to show files within hisoka directly in the terminal";
+  ]
+
+  let cmd run =
+    let info =
+      Cmd.info name
+        ~doc:cmd_doc
+        ~man:cmd_man
+    in
+    Cmd.v info (cmd_term run)
+
+  let run cmd = 
+    let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
+    let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+    let items_list = Manager.Manager.list_name_data ~key:encrypted_key ~group:cmd.group manager in
+    let items_list = if cmd.files = [] then items_list else items_list |> List.filter (fun (s, _) -> List.mem s cmd.files) in
+    let () = Cbindings.Display.hisoka_show items_list (List.length items_list) cmd.pixel_mode () in
+    ()
+end
+
 
 module Chafa_Test = struct
   type test_cmd = {
@@ -456,6 +530,7 @@ module Hisoka_Cmd = struct
     Decrypt_Cmd.cmd run;
     Delete_Cmd.cmd run;
     Chafa_Test.cmd run;
+    Display_Cmd.cmd run;
   ]
 
 
@@ -467,6 +542,7 @@ module Hisoka_Cmd = struct
   | `Decrypt decrypt_cmd -> Decrypt_Cmd.run decrypt_cmd
   | `Delete delete_cmd -> Delete_Cmd.run delete_cmd
   | `CTest chafa_cmd -> Chafa_Test.run chafa_cmd
+  | `Display display_cmd -> Display_Cmd.run display_cmd
 
   let parse run =
     Cmd.group root_info (subcommands run)

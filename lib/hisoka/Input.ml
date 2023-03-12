@@ -72,4 +72,4 @@ let rec confirm_choice: type a. continue_on_wrong_input:a input_behavior -> ?cas
       Some false
   else
     let () = message |> Option.iter (fun s -> Printf.printf "%s\n" s) in
-    confirm_choice ~continue_on_wrong_input ~case_insensible ~yes ~no ~prompt ()
+    None
