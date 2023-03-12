@@ -402,7 +402,7 @@ module Display_Cmd = struct
 
   let pixel_mode = Arg.(
       required
-      & opt ~vopt:(Some Cbindings.Display.NONE)  (some & enum pixel_modes) None
+      & opt (some & enum pixel_modes) (Some Cbindings.Display.NONE)
       & info ~docv:"Specify the pixel mode to use to render the image"
           ~doc:(doc_alts_enum ~quoted:true pixel_modes)
           [ "m"; "mode" ])

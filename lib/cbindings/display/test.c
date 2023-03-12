@@ -1,3 +1,4 @@
+#include <signal.h>
 #define CAML_NAME_SPACE
 
 #include <chafa.h>
@@ -16,9 +17,10 @@
 
 #define RGBA "RGBA"
 #define NCHANNEL 4
+#define SCALE 0.93
 
 #define NO_FILE "The list is empty"
-#define NO_IMAGE_FILE ""
+#define NO_IMAGE_FILE "Not an image file"
 
 const char* NEW_SCREEN_BUFF_SEQ = "\033[?1049h\033[H";
 const char* END_SRCEEN_BUFF_SEQ = "\033[?1049l";
@@ -30,7 +32,31 @@ const char* LOWER_RIGTH_CORNER = "┘";
 const char* HORIZONTAL_LINE = "─"; // "─" != '-'
 const char* VERTICAL_LINE = "│";
 
-#define SCALE 0.93
+struct termios raw;
+struct termios orig_termios;
+
+void enableRawMode();
+void disableRawMode();
+void end_window();
+
+void enableRawMode() {
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    struct termios raw = orig_termios;
+  
+    raw.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void disableRawMode() {
+  raw.c_lflag |= (ECHO | ICANON);  
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
+void handle_sigint(int signo) {
+    disableRawMode();
+    end_window();
+}
+
 
 typedef enum pixel_mode {
     ITERM = 0,
@@ -93,21 +119,7 @@ void move_forward_column(unsigned int c) {
     fflush(stdout);
 }
 
-struct termios raw;
-struct termios orig_termios;
 
-void enableRawMode() {
-    tcgetattr(STDIN_FILENO, &orig_termios);
-    struct termios raw = orig_termios;
-  
-    raw.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
-
-void disableRawMode() {
-  raw.c_lflag |= (ECHO | ICANON);  
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
 
 void start_window() {
     enableRawMode();
@@ -168,11 +180,22 @@ void draw_first_line(const char* title, const struct winsize *w, int endline) {
 
 void draw_last_line(const struct winsize *w, int n, int outof) {
     // size_t title_len = strlen(title);
+    int len = snprintf(NULL, 0, "%u/%u", n, outof);
     draw_string(LOWER_LEFT_CORNER);
     draw_horizontal_line();
-    for (unsigned int n = 2; n < w->ws_col - 1; n += 1) {
-        draw_horizontal_line();
+
+    if (len > w->ws_col - 1) {
+        for (unsigned int n = 2; n < w->ws_col - 1; n += 1) {
+            draw_horizontal_line();
+        }
+    } else {
+        for (unsigned int n = 2; n < w->ws_col - 1 - len; n += 1) {
+            draw_horizontal_line();
+        }
+        fprintf(stdout, "%u/%u", n + 1, outof + 1);
+        fflush(stdout);
     }
+
     draw_string(LOWER_RIGTH_CORNER);
 }
 
@@ -197,7 +220,7 @@ void draw_main_window(const char* title, int n, int outof) {
     size_t title_len = strlen(title);
     for (int nrow = 0; nrow < w.ws_row; nrow += 1) {
         if (nrow == 0 ) draw_first_line(title, &w, 1);
-        else if (nrow == w.ws_row - 1) draw_last_line(&w, 0, 10);
+        else if (nrow == w.ws_row - 1) draw_last_line(&w, n, outof);
         else draw_middle_line(&w, nrow + 1, 1);
     }
 }
@@ -349,7 +372,7 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
         free( (void *) pixels);
         return MAGICK_EXPORT_FAIl;
     }
-    clear();
+    // clear();
     set_cursor_at(0, 0);
     draw_main_window(image->image_name, current_image_index, nbimage);
     draw_image(w, ITERM, image_width, image_height, row_stride, pixels);
@@ -361,6 +384,9 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
 
 // ml_list : (string * string) list
 CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode, value unit) {
+
+    // signal(SIGINT, handle_sigint);
+
     CAMLparam4(name_byte_list, list_len, mode, unit);
     size_t nbimage = Val_long(list_len);
     size_t current_image_index = 0;
