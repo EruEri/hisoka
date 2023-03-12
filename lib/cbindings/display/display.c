@@ -247,8 +247,9 @@ void draw_image(const struct winsize *w, pixel_mode_t mode, size_t image_width, 
     set_cursor_at(start_point_draw_y, start_point_draw_x);
     draw_gstring(s);
 
-    g_string_free (s, TRUE);
+    g_string_free(s, TRUE);
     chafa_canvas_unref(canvas);
+    chafa_canvas_config_unref(config);
     // chafa_term_info_unref(terminfo);
 }
 
