@@ -23,5 +23,5 @@ end
 module Chafa_Test = struct
   external chafa_display: string -> unit -> unit = "caml_chafa_test"
 
-  external curses_test: unit -> unit = "caml_curses_test"
+  external caml_hisoka_show: (string*string) list -> int -> int -> unit -> unit = "caml_hisoka_show"
 end

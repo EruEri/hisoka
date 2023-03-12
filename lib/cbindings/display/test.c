@@ -18,8 +18,12 @@
 #define RGBA "RGBA"
 #define NCHANNEL 4
 
+#define NO_FILE "The list is empty"
+#define NO_IMAGE_FILE ""
+
 const char* NEW_SCREEN_BUFF_SEQ = "\033[?1049h\033[H";
 const char* END_SRCEEN_BUFF_SEQ = "\033[?1049l";
+const char* CLEAR_CONSOLE = "\033[2J";
 const char* UPPER_LEFT_CORNER = "┌";
 const char* UPPER_RIGHT_CORNER = "┐";
 const char* LOWER_LEFT_CORNER = "└";
@@ -35,6 +39,24 @@ typedef enum pixel_mode {
     SIXEL,
     NONE
 } pixel_mode_t;
+
+typedef enum {
+    NO_ERROR,
+    MALLOC_FAIL,
+    MAGICKNULL,
+    MAGICK_EXPORT_FAIl,
+} exit_status_t;
+
+typedef struct {
+    const char* image_name;
+    const unsigned char* image_bytes;
+    size_t bytes_len;
+} image_t;
+
+typedef struct {
+    image_t* images;
+    size_t count;
+} image_array_t;
 
 void set_pixel_mode(ChafaCanvasConfig* config, pixel_mode_t mode) {
     switch (mode) {
@@ -59,6 +81,11 @@ void set_cursor_at(unsigned int line, unsigned int colmn) {
 
 void move_down(unsigned int l) {
     fprintf(stdout, "\033[%uB", l);
+    fflush(stdout);
+}
+
+void clear(){
+    fprintf(stdout, "%s", CLEAR_CONSOLE);
     fflush(stdout);
 }
 
@@ -141,6 +168,11 @@ void draw_middle_line(const struct winsize *w, unsigned int row, int endline) {
     if (endline) next_line(row);
 }
 
+void draw_error_message(const struct winsize *w, const char* message) {
+    set_cursor_at(w->ws_row / 2 , w->ws_col / 2);
+    draw_string(message);
+}
+
 void draw_main_window(const char* title, int n, int outof) {
     struct winsize w;
     ioctl(0, TIOCGWINSZ, &w);
@@ -152,15 +184,12 @@ void draw_main_window(const char* title, int n, int outof) {
     }
 }
 
-void draw_image(const struct winsize *w, pixel_mode_t mode, size_t image_width,  size_t image_height, const unsigned char* pixels) {
-
-    size_t row_stride =  image_width * NCHANNEL;
+void draw_image(const struct winsize *w, pixel_mode_t mode, size_t image_width,  size_t image_height, size_t row_stride, const unsigned char* pixels) {
     size_t scaled_width = w->ws_col * SCALE;
     size_t scaled_height = w->ws_row * SCALE;
     unsigned int start_point_draw_x = ((w->ws_col - scaled_width) / 2) + 1;
-    unsigned int start_point_draw_y = (w->ws_row - scaled_height) / 2 + 1;
+    unsigned int start_point_draw_y = ((w->ws_row - scaled_height) / 2) + 1;
     ChafaCanvasConfig* config = chafa_canvas_config_new();
-    // ChafaTermInfo* terminfo = chafa_term_info_new();
     set_pixel_mode(config, mode);
 
 
@@ -222,62 +251,149 @@ CAMLprim value caml_chafa_test(value path, value unit) {
 
     start_window();
     draw_main_window("Hello world", 0, 10);
-    draw_image(&w, ITERM, image_width, image_height, pixels);
+    draw_image(&w, ITERM, image_width, image_height, row_stride, pixels);
     sleep(4);
     end_window();
 
-    printf ("lines %d\n", w.ws_row);
-    printf ("columns %d\n", w.ws_col);
-    const char* c = "─";
-
-
-    // ChafaCanvasConfig* config = chafa_canvas_config_new();
-    // chafa_canvas_config_set_pixel_mode(config, CHAFA_PIXEL_MODE_ITERM2);
-    // chafa_canvas_config_set_geometry(config, w.ws_col - 4, w.ws_row - 4);
-    // ChafaCanvas* canvas = chafa_canvas_new(config);
-    // chafa_canvas_draw_all_pixels (canvas,
-    //                               CHAFA_PIXEL_RGBA8_UNASSOCIATED,
-    //                               pixels,
-    //                               image_width,
-    //                               image_height,
-    //                               row_stride);
-
-    // GString* s = chafa_canvas_print(canvas, NULL);
-    // char selc[CHAFA_TERM_SEQ_LENGTH_MAX];
-    // ChafaTermInfo* info = chafa_term_info_new();
-    
-    
-    
-    // printf("\033[?1049h\033[H");
-    // gchar* c = chafa_term_info_emit_begin_iterm2_image(info, selc, 4, 4);
-    // puts("Hello world");
-    // write (STDOUT_FILENO, "\033[?1049h\033[H", strlen("\033[?1049h\033[H"));
-    // for (unsigned short i = 0; i < w.ws_col; i += 1) {
-    //     write(STDOUT_FILENO, "─", strlen("─"));
-        
-    // }
-    // write(STDOUT_FILENO, "\n  ", 3);
-    // write (STDOUT_FILENO, s->str, sizeof(char) * s->len);
-    // sleep(4);
-    // write(STDOUT_FILENO, "\033[?1049l", strlen("\033[?1049l"));
-    // chafa_term_info_emit_end_iterm2_image (info, selc);
-    // sleep(5);
-    // printf("\033[?1049l");
-
-    // endwin();
-
-    // fwrite (s->str, sizeof (char), s->len, stdout);
-    // fputc ('\n', stdout);
-    // fprintf(stdout, "\n\npixels = %lu, len = %lu width = %lu, height = %lu", sizeof(unsigned char) * image_height * row_stride,  s->len / 8, image_width, image_height);
-
-
-
-
-    // g_string_free (s, TRUE);
-    // chafa_canvas_unref(canvas);
-    // chafa_canvas_config_unref(config);
     DestroyMagickWand(magick_wand);
     MagickWandTerminus();
     free((void *) pixels);
     CAMLreturn(Val_unit);
+}
+
+image_array_t* create_image_array(size_t nbimage) {
+    image_array_t* array = malloc(sizeof(image_array_t));
+    if (!array) return NULL;
+
+    image_t* images_ptr = malloc(sizeof(image_t) * nbimage);
+    if (!images_ptr) return NULL;
+
+    array->images = images_ptr;
+    array->count = nbimage;
+    return array;
+}
+
+
+void free_image_array(image_array_t* array) {
+    free((void *) array->images);
+    free(array);
+}
+
+
+// (string * string ) 
+// meaning (string * bytes)
+image_t convert_list_cell(value elt_list) {
+    CAMLparam1(elt_list);
+    CAMLlocal2(image_name, image_data);
+    image_name = Field(elt_list, 0);
+    image_data = Field(elt_list, 1);
+    const char* cimage_name = String_val(image_name);
+    const unsigned char* cimage_data = Bytes_val(image_data);
+    size_t data_len = caml_string_length(image_data);
+    image_t im = { .image_name = cimage_name, .image_bytes = cimage_data, .bytes_len = data_len };
+    return im;
+}
+
+// ml_list : (string * string) list
+void array_image_of_list_image(value ml_list, image_array_t* image_array) {
+    CAMLparam1(ml_list);
+    CAMLlocal1( head );
+    size_t index = 0;
+    while (ml_list != Val_emptylist) {
+        head = Field(ml_list, 0);
+        image_t image = convert_list_cell( head );
+        image_array->images[index] = image;
+        ml_list = Field(ml_list, 1); 
+        index += 1;
+    }
+}
+
+MagickWand* create_wand_of_image(image_t image) {
+    MagickWand* magick_wand = NewMagickWand();
+    MagickBooleanType status = MagickReadImageBlob(magick_wand, image.image_bytes, image.bytes_len);
+    if (status == MagickFalse) return NULL;
+    return magick_wand;
+}
+
+exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, const image_t* image, const size_t current_image_index, const size_t nbimage) {
+    if (!magick_wand) return MAGICKNULL;
+
+    size_t image_width = MagickGetImageWidth(magick_wand);
+    size_t image_height = MagickGetImageHeight(magick_wand);
+
+
+    size_t row_stride =  image_width * NCHANNEL;
+    const unsigned char *pixels = malloc( sizeof(unsigned char) * image_height * row_stride);
+    if (!pixels) return MALLOC_FAIL;
+
+    MagickStatusType status = MagickExportImagePixels(magick_wand, 0, 0, image_width, image_height, RGBA, CharPixel, (void *) pixels);
+    if (status == MagickFalse) {
+        free( (void *) pixels);
+        return MAGICK_EXPORT_FAIl;
+    }
+    clear();
+    draw_main_window(image->image_name, current_image_index, nbimage);
+    draw_image(w, ITERM, image_width, image_height, row_stride, pixels);
+
+
+    free( (void *) pixels);
+    return NO_ERROR;
+}
+
+// ml_list : (string * string) list
+CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode, value unit) {
+    CAMLparam4(name_byte_list, list_len, mode, unit);
+    size_t nbimage = Val_long(list_len);
+    size_t current_image_index = 0;
+    size_t previous_image_index = nbimage;
+    pixel_mode_t pmode = Int_val(mode);
+    int RUNNING = 1;
+    image_array_t* image_array = create_image_array(nbimage);
+    if (!image_array) {
+        printf("Empty list");
+        CAMLreturn(unit);
+    } 
+    array_image_of_list_image(name_byte_list, image_array);
+    start_window();
+    draw_main_window("hisoka", current_image_index, nbimage);
+    MagickWandGenesis();
+    MagickWand* current = NULL;
+    image_t im;
+    while (RUNNING) {
+        struct winsize w;
+        ioctl(0, TIOCGWINSZ, &w);
+        if (current_image_index != previous_image_index) {
+            previous_image_index = current_image_index;
+            im = image_array->images[current_image_index];
+            MagickWand* tmp = create_wand_of_image(im);
+            if (tmp) {
+                if (current) {
+                    DestroyMagickWand(current);
+                }
+                current = tmp;
+                exit_status_t status = draw_image_wand(&w, current, &im, current_image_index, nbimage);
+            }
+        }
+        int c = fgetc(stdin);
+        switch (c) {
+            case 'q': {
+                RUNNING = 0;
+                break;
+            }
+            case 'j': {
+                current_image_index = (current_image_index - 1) % nbimage;
+                break;
+            }
+            case 'l': {
+                current_image_index = (current_image_index + 1) % nbimage;
+                break;
+            }
+        }
+    }
+
+    if (current) DestroyMagickWand(current);
+    end_window();
+    MagickWandTerminus();
+    free_image_array(image_array);
+    CAMLreturn(unit);
 }

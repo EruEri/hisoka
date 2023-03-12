@@ -9,7 +9,7 @@ let generate_flag_libs name =
 
 let chafa_cflag, chafa_clib = generate_flag_libs "chafa"
 
-let ncursesw_cflag, ncursesw_clib = generate_flag_libs "ncursesw"
+(* let ncursesw_cflag, ncursesw_clib = generate_flag_libs "ncursesw" *)
 
 let magicwand_cflag, magicwand_clib = generate_flag_libs "MagickWand"
 
@@ -33,6 +33,5 @@ let pkg_config ~cflags ~clibs ~libname () =
   )
 
 let () = pkg_config ~cflags:chafa_cflag ~clibs:chafa_clib ~libname:"chafa" ()
-let () = pkg_config ~cflags:ncursesw_cflag ~clibs:ncursesw_clib ~libname:"ncursesw" ()
 let () = pkg_config ~cflags:magicwand_cflag ~clibs:magicwand_clib ~libname:"MagickWand" ()
 (* let () = pkg_config ~libname:"ncursesw" () *)
