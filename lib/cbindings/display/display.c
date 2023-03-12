@@ -299,7 +299,7 @@ void redraw_main_window(const char* title, int n, int outof, const struct winsiz
     draw_main_window(title, n, outof);
 }
 
-exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, const image_t* image, const size_t current_image_index, const size_t nbimage) {
+exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, const image_t* image, const pixel_mode_t mode, const size_t current_image_index, const size_t nbimage) {
     if (!magick_wand) return MAGICKNULL;
 
     size_t image_width = MagickGetImageWidth(magick_wand);
@@ -317,7 +317,7 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
     }
     // clear();
     redraw_main_window(image->image_name, current_image_index, nbimage, NULL);
-    draw_image(w, ITERM, image_width, image_height, row_stride, pixels);
+    draw_image(w, mode, image_width, image_height, row_stride, pixels);
 
 
     free( (void *) pixels);
@@ -366,7 +366,7 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
                     DestroyMagickWand(current);
                 }
                 current = tmp;
-                exit_status_t status = draw_image_wand(&w, current, &im, current_image_index, nbimage);
+                exit_status_t status = draw_image_wand(&w, current, &im, pmode, current_image_index, nbimage);
             } else {
                 redraw_main_window(im.image_name, current_image_index, nbimage, &w);
                 draw_error_message(&w, NO_IMAGE_FILE);
