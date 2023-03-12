@@ -192,7 +192,7 @@ void draw_last_line(const struct winsize *w, int n, int outof) {
         for (unsigned int n = 2; n < w->ws_col - 1 - len; n += 1) {
             draw_horizontal_line();
         }
-        fprintf(stdout, "%u/%u", n + 1, outof + 1);
+        fprintf(stdout, "%u/%u", n + 1, outof);
         fflush(stdout);
     }
 
@@ -386,11 +386,11 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
 CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode, value unit) {
 
     // signal(SIGINT, handle_sigint);
-
     CAMLparam4(name_byte_list, list_len, mode, unit);
-    size_t nbimage = Val_long(list_len);
+    size_t nbimage = Long_val(list_len);
     size_t current_image_index = 0;
     size_t previous_image_index = nbimage;
+    printf("c len = %lu\n", nbimage);
     pixel_mode_t pmode = Int_val(mode);
     int RUNNING = 1;
     image_array_t* image_array = create_image_array(nbimage);
