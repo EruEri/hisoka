@@ -20,8 +20,9 @@
 #define NCHANNEL 4
 #define SCALE 0.93
 
-#define NO_FILE "The list is empty"
+#define NO_FILE "The list is empty, Press 'q' to quit"
 #define NO_IMAGE_FILE "Not an image file"
+
 
 struct termios raw;
 struct termios orig_termios;
@@ -308,8 +309,6 @@ exit_status_t draw_image_wand(const struct winsize* w, MagickWand* magick_wand, 
 
 // ml_list : (string * string) list
 CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode, value unit) {
-
-    // signal(SIGINT, handle_sigint);
     CAMLparam4(name_byte_list, list_len, mode, unit);
     size_t nbimage = Long_val(list_len);
     size_t current_image_index = 0;
@@ -317,6 +316,7 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
     // printf("c len = %lu\n", nbimage);
     pixel_mode_t pmode = Int_val(mode);
     int RUNNING = 1;
+    int EMPTY_LIST_ALREADY_DRAW = 0;
     image_array_t* image_array = create_image_array(nbimage);
     if (!image_array) {
         printf("Empty list");
@@ -327,12 +327,20 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
     draw_main_window("hisoka", current_image_index, nbimage);
     MagickWandGenesis();
     MagickWand* current = NULL;
-    char c;
+    char intput_char;
     image_t im;
     while (RUNNING) {
         struct winsize w;
         ioctl(0, TIOCGWINSZ, &w);
-        if (current_image_index != previous_image_index) {
+        if (nbimage == 0) {
+            if (EMPTY_LIST_ALREADY_DRAW) {}
+            else {
+                redraw_main_window("hisoka", 0, nbimage, &w);
+                draw_error_message(&w, NO_FILE);
+                EMPTY_LIST_ALREADY_DRAW = 1;
+            }
+
+        } else if (current_image_index != previous_image_index) {
             previous_image_index = current_image_index;
             im = image_array->images[current_image_index];
             MagickWand* tmp = create_wand_of_image(im);
@@ -347,8 +355,8 @@ CAMLprim value caml_hisoka_show(value name_byte_list, value list_len, value mode
                 draw_error_message(&w, NO_IMAGE_FILE);
             }
         }
-        int _ = read(STDIN_FILENO, &c, 1);
-        switch (c) {
+        int _ = read(STDIN_FILENO, &intput_char, 1);
+        switch (intput_char) {
             case 'q': {
                 RUNNING = 0;
                 break;

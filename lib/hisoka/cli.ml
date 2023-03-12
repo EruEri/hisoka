@@ -389,7 +389,8 @@ module Display_Cmd = struct
 
   type display_cmd = {
     pixel_mode: Cbindings.Display.pixel_mode;
-    group: string option; 
+    group: string option;
+    files: string list;
   }
 
   let pixel_modes =
@@ -400,11 +401,14 @@ module Display_Cmd = struct
       ("none", Cbindings.Display.NONE);  
     ]
 
+  let files_term = 
+    Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to display")
+
   let pixel_mode = Arg.(
       required
-      & opt (some & enum pixel_modes) (Some Cbindings.Display.NONE)
-      & info ~docv:"Specify the pixel mode to use to render the image"
-          ~doc:(doc_alts_enum ~quoted:true pixel_modes)
+      & opt ~vopt:(Some Cbindings.Display.NONE) (some & enum pixel_modes) (Some Cbindings.Display.NONE)
+      & info ~docv:"Pixel Mode"
+          ~doc:("Specify the pixel mode to use to render the image. " ^ doc_alts_enum ~quoted:true pixel_modes)
           [ "m"; "mode" ])
 
 
@@ -412,12 +416,13 @@ module Display_Cmd = struct
     Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Render files belonging to GROUP")
 
   let cmd_term run = 
-    let combine pixel_mode group = 
-      run @@ `Display {pixel_mode; group}
+    let combine pixel_mode group files = 
+      run @@ `Display {pixel_mode; group; files}
     in
     Term.(const combine
       $ pixel_mode
       $ group_term
+      $ files_term
     )
 
   let group_term = 
@@ -448,6 +453,7 @@ module Display_Cmd = struct
     let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
     let manager = Manager.Manager.decrypt ~key:encrypted_key () in
     let items_list = Manager.Manager.list_name_data ~key:encrypted_key ~group:cmd.group manager in
+    let items_list = if cmd.files = [] then items_list else items_list |> List.filter (fun (s, _) -> List.mem s cmd.files) in
     let () = Cbindings.Display.hisoka_show items_list (List.length items_list) cmd.pixel_mode () in
     ()
 end
