@@ -28,31 +28,17 @@ module AppLocation = struct
 end
 
 module App = struct
-  type init_error = 
-  | App_folder_already_exist
-  | Create_folder of PathBuf.pathbuf
-  | Create_file of PathBuf.pathbuf
-  | EncryptionError of PathBuf.pathbuf
 
-  let string_of_init_error = function
-  | App_folder_already_exist -> 
-    "\".hisoka\" directory already exists"
-  | Create_folder path ->
-    Printf.sprintf "Unable to create directory : %s" (PathBuf.to_string path)
-  | Create_file path ->
-    Printf.sprintf "Unable to create file : %s" (PathBuf.to_string path)
-  | EncryptionError path ->
-    Printf.sprintf "Unable to encrypt file : %s" (PathBuf.to_string path)
+  let is_app_folder_exist = 
+    let open AppLocation in
+    let app_path = hisoka_dir |> PathBuf.to_string in
+    app_path |> Sys.file_exists
 
-  exception Init_Error of init_error
-
-  let register_exn () =  
-    Printexc.register_printer (function
-    | Init_Error init_error -> init_error |> string_of_init_error |> Option.some
-    | _ -> None
-  )
-
-  let register_exn = register_exn ()
+  let check_app_initialized () = 
+    let () = if not is_app_folder_exist then
+      raise Error.(HisokaError Hisoka_Not_Initialized)
+    in
+    ()
 
   let create_folder ?(perm = 0o700) ~on_error folder = 
     let to_path_string = PathBuf.to_string folder in

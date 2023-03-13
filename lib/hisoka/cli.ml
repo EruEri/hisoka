@@ -63,9 +63,9 @@ module Init_Cmd = struct
     let force = cmd_init.force in
     let (>>=) = Result.bind in
     let app_path = hisoka_dir |> PathBuf.to_string in
-    let is_app_folder_exist = app_path |> Sys.file_exists in
+    let is_app_folder_exist = App.App.is_app_folder_exist in
     let res = if is_app_folder_exist && not force
-      then Error App_folder_already_exist
+      then Error Error.App_folder_already_exist
     else
       let () = if is_app_folder_exist && force then 
         rmrf app_path ()
@@ -76,27 +76,27 @@ module Init_Cmd = struct
         | Ok encrypted_key -> encrypted_key
         | Error exn -> raise (Input.PassError exn) 
       in
-      create_folder ~on_error:(Create_folder hisoka_dir) hisoka_dir
+      create_folder ~on_error:(Error.Create_folder hisoka_dir) hisoka_dir
       >>= fun hisoka_dir -> 
         let monolithic_file_path = PathBuf.push monolithic_file hisoka_dir in
         let monolithic_manager = Manager.Monolitchic_Manager.create in
         let data =  Manager.Monolitchic_Manager.encrypt ~key:encrypted_key monolithic_manager () in
-        create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Create_file monolithic_file_path) monolithic_file_path
+        create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Error.Create_file monolithic_file_path) monolithic_file_path
       >>= fun monolithic_file_path ->
         let app_dir = PathBuf.pop monolithic_file_path in
         let external_file_path = PathBuf.push config_file app_dir in
         let external_manager = Manager.External_Manager.create in
         let data = Manager.External_Manager.encrypt ~key:encrypted_key external_manager () in
-        create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Create_file external_file_path) external_file_path
+        create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Error.Create_file external_file_path) external_file_path
       >>= fun external_file_path -> 
         let app_dir = PathBuf.pop external_file_path in
         let data_foler_dir = PathBuf.push data_folder app_dir in
-        create_folder ~on_error:(Create_folder data_foler_dir) data_foler_dir 
+        create_folder ~on_error:(Error.Create_folder data_foler_dir) data_foler_dir 
     in
     match res with
     | Ok _ -> 
       Printf.printf "Hisoka initialized\n"
-    | Error init_error -> raise (Init_Error init_error)
+    | Error init_error -> raise (Error.HisokaError (Init_Error init_error) )
       
 
 end
@@ -226,6 +226,7 @@ module List_Cmd = struct
 
 
     let run cmd_list = 
+      let () = App.App.check_app_initialized () in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let items_list = Manager.Manager.list_info manager in
@@ -301,6 +302,7 @@ module Decrypt_Cmd = struct
       Cmd.v info (cmd_term run)
 
     let run decrypt_cmd = 
+      let () = App.App.check_app_initialized () in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let manager_filtered = Manager.Manager.fetch_group_files 
@@ -358,6 +360,7 @@ module Delete_Cmd = struct
       Cmd.v info (cmd_term run)
 
     let run delete_cmd =
+      let () = App.App.check_app_initialized () in
       let delete_all_in_group = Option.is_some delete_cmd.group && delete_cmd.files = [] in
       let () = if delete_all_in_group then
         let continue = Input.confirm_choice ~continue_on_wrong_input:(Input.Continue (Some "Wrong input") ) ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:(Printf.sprintf "Are you sure about deleting all files in group : %s" (Option.get delete_cmd.group) ) () in
@@ -450,6 +453,7 @@ module Display_Cmd = struct
     Cmd.v info (cmd_term run)
 
   let run cmd = 
+    let () = App.App.check_app_initialized () in
     let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
     let manager = Manager.Manager.decrypt ~key:encrypted_key () in
     let items_list = Manager.Manager.list_name_data ~key:encrypted_key ~group:cmd.group manager in
