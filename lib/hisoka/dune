@@ -17,6 +17,6 @@
 
 (library
  (name hisoka)
- (libraries cryptokit yojson ppx_deriving_yojson.runtime cmdliner cbindings)
+ (libraries cryptokit yojson ppx_deriving_yojson.runtime cmdliner cbindings xdg)
  (preprocess (pps ppx_deriving_yojson))
  )

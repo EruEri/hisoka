@@ -122,7 +122,7 @@ There are other subcommands but those 3 explain pretty much how hisoka works.
 ## How to build
 - First you will need Ocaml >= 5.0.0 and install those opam packages.
     ```sh
-    $ opam install cryptokit yojson cmdliner ppx_deriving_yojson
+    $ opam install cryptokit dune xdg yojson cmdliner ppx_deriving_yojson
     ```
 
 - You will also need to install those C libraries:

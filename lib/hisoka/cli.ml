@@ -62,8 +62,8 @@ module Init_Cmd = struct
     let open App.AppLocation in
     let force = cmd_init.force in
     let (>>=) = Result.bind in
-    let app_path = hisoka_dir |> PathBuf.to_string in
-    let is_app_folder_exist = App.App.is_app_folder_exist in
+    let app_path = PathBuf.to_string hisoka_dir in
+    let is_app_folder_exist = Sys.file_exists app_path in
     let res = if is_app_folder_exist && not force
       then Error Error.App_folder_already_exist
     else

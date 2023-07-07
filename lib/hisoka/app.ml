@@ -16,12 +16,23 @@
 (**********************************************************************************************)
 
 module AppLocation = struct
+
+  let hisoka = "hisoka"
+
+  let ( // ) = Filename.concat
+
+  let xdg = Xdg.create ~env:Sys.getenv_opt ()
+
+  let xdg_data = Xdg.data_dir xdg
+
+  let hisoka_dir = xdg_data // hisoka
+
   let app_folder = ".hisoka"
 
   let data_folder = ".data"
   let config_file = ".hisoka_extern_rc"
   let monolithic_file = ".hisokamono"
-  let hisoka_dir = PathBuf.from_list [Util.home_dir; app_folder]
+  let hisoka_dir = PathBuf.from_list [hisoka_dir]
   let hisoka_extern_config_file = PathBuf.push config_file hisoka_dir
   let hisoka_mono_file = PathBuf.push monolithic_file hisoka_dir
   let hisoka_data_dir = PathBuf.push data_folder hisoka_dir
