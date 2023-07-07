@@ -36,7 +36,7 @@ module Init_Cmd = struct
 
   let cmd_term run = 
     let combine force = 
-      run @@ `Init {force}
+      run @@ {force}
     in
     Term.(const combine 
       $ force_term
@@ -99,6 +99,7 @@ module Init_Cmd = struct
     | Error init_error -> raise (Error.HisokaError (Init_Error init_error) )
       
 
+    let command = cmd run
 end
 
 module Add_Cmd = struct
@@ -146,7 +147,7 @@ module Add_Cmd = struct
 
     let cmd_term run = 
       let combine monolithic file download_url group = 
-        run @@ `Add {monolithic; file; download_url; group}
+        run @@ {monolithic; file; download_url; group}
       in
       Term.(const combine 
         $ monolithic_term
@@ -181,7 +182,9 @@ module Add_Cmd = struct
             Manager.Manager.add_item_from_file ~monolithic:cmd_add.monolithic ~group:cmd_add.group ~name ~extension ~file_name:cmd_add.file manager
         in
       let () = Manager.Manager.encrypt ~key:encrypted_key ~max_iter:3 ~raise_on_conflicts:true manager () in
-      Printf.printf "File: \"%s\" Added\n" cmd_add.file;
+      Printf.printf "File: \"%s\" Added\n" cmd_add.file
+
+    let command = cmd run
       
 end
 
@@ -204,7 +207,7 @@ module List_Cmd = struct
 
   let cmd_term run = 
     let combine group = 
-      run @@ `List {group}
+      run @@ {group}
     in
     Term.(const combine
       $ group_term
@@ -243,6 +246,8 @@ module List_Cmd = struct
         Printf.printf "group : %s, name : %s, extension : %s\n" (Option.value ~default:"null" info.group) info.name info.extension 
       )  in
       ()
+
+    let command = cmd run
 end
 
 module Decrypt_Cmd = struct
@@ -279,7 +284,7 @@ module Decrypt_Cmd = struct
 
   let cmd_term run = 
     let combine group files out_dir = 
-      run @@ `Decrypt {group; files; out_dir}
+      run @@ {group; files; out_dir}
     in
     Term.(const combine
       $ group_term
@@ -317,6 +322,7 @@ module Decrypt_Cmd = struct
       ()
     | true -> raise (Error.(HisokaError No_file_to_decrypt))
 
+    let command = cmd run
 end
 
 module Delete_Cmd = struct
@@ -337,7 +343,7 @@ module Delete_Cmd = struct
 
   let cmd_term run = 
       let combine group files = 
-        run @@ `Delete {group; files}
+        run @@ {group; files}
       in
       Term.(const combine
         $ group_term
@@ -385,6 +391,7 @@ module Delete_Cmd = struct
           raise Error.(HisokaError No_Option_choosen)
       
 
+    let command = cmd run
 end
 
 module Display_Cmd = struct
@@ -420,7 +427,7 @@ module Display_Cmd = struct
 
   let cmd_term run = 
     let combine pixel_mode group files = 
-      run @@ `Display {pixel_mode; group; files}
+      run @@ {pixel_mode; group; files}
     in
     Term.(const combine
       $ pixel_mode
@@ -460,6 +467,8 @@ module Display_Cmd = struct
     let items_list = if cmd.files = [] then items_list else items_list |> List.filter (fun (s, _) -> List.mem s cmd.files) in
     let () = Cbindings.Display.hisoka_show items_list (List.length items_list) cmd.pixel_mode () in
     ()
+
+  let command = cmd run
 end
 
 
@@ -472,7 +481,7 @@ module Chafa_Test = struct
 
   let cmd_term run = 
     let combine file = 
-      run @@ `CTest {file}
+      run @@ {file}
     in
     Term.(const combine
       $ file_term
@@ -496,6 +505,8 @@ module Chafa_Test = struct
       let run {file} = 
         let () = Cbindings.Chafa_Test.chafa_display file () in
         ()
+
+  let command = cmd run
 end
 
 
@@ -504,7 +515,7 @@ module Hisoka_Cmd = struct
   let version = "alpha"
   let root_doc = "the file hidder"
 
-  (* type t = bool
+  type t = bool
 
   let change_term = Arg.(value & flag & info ["change-master-password"] ~doc:"Change the master password")
 
@@ -514,7 +525,11 @@ module Hisoka_Cmd = struct
     in
     Term.(const combine
       $ change_term
-    ) *)
+    )
+
+  let run_base change_password = 
+    ignore change_password;
+    ()
 
 
   let root_man = [
@@ -527,29 +542,18 @@ module Hisoka_Cmd = struct
       ~doc:root_doc
       ~man:root_man
       ~version
-  let subcommands run = [
-    Init_Cmd.cmd run;
-    Add_Cmd.cmd run;
-    List_Cmd.cmd run;
-    Decrypt_Cmd.cmd run;
-    Delete_Cmd.cmd run;
-    Chafa_Test.cmd run;
-    Display_Cmd.cmd run;
+  let subcommands = [
+    Init_Cmd.command;
+    Add_Cmd.command;
+    List_Cmd.command;
+    Decrypt_Cmd.command;
+    Delete_Cmd.command;
+    Chafa_Test.command;
+    Display_Cmd.command;
   ]
 
+  let parse () =
+    Cmd.group ~default:(cmd_term run_base) root_info subcommands
 
-  let run = 
-  function
-  | `Init init_cmd -> Init_Cmd.run init_cmd
-  | `Add add_cmd -> Add_Cmd.run add_cmd
-  | `List list_cmd -> List_Cmd.run list_cmd
-  | `Decrypt decrypt_cmd -> Decrypt_Cmd.run decrypt_cmd
-  | `Delete delete_cmd -> Delete_Cmd.run delete_cmd
-  | `CTest chafa_cmd -> Chafa_Test.run chafa_cmd
-  | `Display display_cmd -> Display_Cmd.run display_cmd
-
-  let parse run =
-    Cmd.group root_info (subcommands run)
-
-  let eval () = run |> parse |> Cmd.eval
+  let eval () = () |> parse |> Cmd.eval
 end

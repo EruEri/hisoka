@@ -98,6 +98,7 @@ void free_image_array(image_array_t* array) {
 void set_pixel_mode(ChafaCanvasConfig* config, pixel_mode_t mode) {
     switch (mode) {
     case ITERM:
+        // chafa_canvas_config_set_canvas_mode(config, CHAFA_CANVAS_MODE_INDEXED_256);
         chafa_canvas_config_set_pixel_mode(config, CHAFA_PIXEL_MODE_ITERM2);
         break;
     case KITTY:
@@ -185,8 +186,17 @@ void draw_image(const struct winsize *w, pixel_mode_t mode, size_t image_width, 
     ChafaCanvasConfig* config = chafa_canvas_config_new();
     set_pixel_mode(config, mode);
 
-
     chafa_canvas_config_set_geometry(config, scaled_width, scaled_height);
+    // chafa_canvas_config_set_cell_geometry(config, scaled_width, scaled_height);
+    // chafa_canvas_config_set_color_space(config, CHAFA_COLOR_SPACE_RGB);
+    
+    // chafa_canvas_config_set_cell_geometry(config, scaled_width, scaled_height);
+
+    // if ( SIXEL == mode) {
+    //     chafa_canvas_config_set_geometry(config, scaled_width, scaled_height * 7);
+    // }
+    // chafa_canvas_config_set_canvas_mode(config, CHAFA_CANVAS_MODE_INDEXED_8);
+
     ChafaCanvas* canvas = chafa_canvas_new(config);
     chafa_canvas_draw_all_pixels (canvas,
                                   CHAFA_PIXEL_RGBA8_UNASSOCIATED,
