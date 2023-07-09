@@ -42,8 +42,14 @@ module Common = struct
       Arg.(
         required
         & opt ~vopt:default (some & enum Strategy.strategy_group_enum) default
-        & info ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
-            ~doc:"filter strategy" [ "s"; "strategy" ]
+        & info 
+          ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
+          ~doc:"the filter strategy to apply. \
+          \"any\" matches if at least one of the given groups belongs to the group of the file. \
+          \"all\" matches if all the given groups belongs to the group of the file.  \
+          \"exact\" matches if exactly all the given groups are the same groups as the file"
+
+        [ "s"; "strategy" ]
       )
 
 end
@@ -142,7 +148,7 @@ module Add_Cmd = struct
       let einfo =
         Arg.info ["e"; "existing-group"]
         ~docv:"EXISTING_GROUP"
-        ~doc:"Append the file to a group of file. The group must exist"
+        ~doc:"Append the file to the group $(docv). The group must exist"
       in
       Arg.(
         value & opt_all string [] & einfo 
@@ -154,15 +160,15 @@ module Add_Cmd = struct
         run @@ { files; existing_groups; groups}
       in
       Term.(const combine
-        $ Common.file_term ~docv:"Files" ~doc:("Files to add to hisoka")
+        $ Common.file_term ~docv:"FILES" ~doc:("Files to add to hisoka")
         $ existing_group_term
-        $ Common.groups_term ~docv:"groups" ~doc:""
+        $ Common.groups_term ~docv:"GROUP" ~doc:"Append the file to the group $(docv)"
     )
 
-    let cmd_doc = "Add file to hisoka"
+    let cmd_doc = "Add files to hisoka"
     let cmd_man = [
       `S Manpage.s_description;
-      `P "Add file to hisoka";
+      `P "Add files to hisoka";
     ]
 
     let cmd run =
@@ -221,7 +227,7 @@ module List_Cmd = struct
     in
     Term.(const combine
       $ Common.stragtegy_group_term
-      $ Common.groups_term ~docv:"" ~doc:""
+      $ Common.groups_term ~docv:"FILES" ~doc:"Files to list"
     )
 
     let cmd_doc = "Display the list of encrypted files"
@@ -278,7 +284,15 @@ module Decrypt_Cmd = struct
   type t = cmd_decrypt
 
   let files_term = 
-    Arg.(non_empty & pos_all string [] & info [] ~docv:"FILES" )
+    Arg.(
+      value 
+      & pos_all string [] 
+      & info [] 
+        ~docv:"FILES" 
+        ~doc:"Files to decrypt. \
+        If no file is provided, all the files which are matched \
+        by the groups and strategy will be decrypted"
+    )
 
   let out_dir_term = 
     Arg.(value 
@@ -295,9 +309,9 @@ module Decrypt_Cmd = struct
       run @@ {groups; strategy; files; out_dir}
     in
     Term.(const combine
-      $ Common.groups_term ~docv:""  ~doc:"Decrypt all files belonging to GROUP"
+      $ Common.groups_term ~docv:"GROUP" ~doc:"Decrypt all files belonging to GROUP"
       $ Common.stragtegy_group_term
-      $ Common.file_term ~docv:"FILES" ~doc:"Decrypt all the files"
+      $ files_term
       $ out_dir_term
     )
 
@@ -350,8 +364,6 @@ module Delete_Cmd = struct
   let files_term = 
     Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete")
 
-  let group_term = 
-    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" )
 
   let cmd_term run = 
       let combine groups strategy files = 
@@ -537,7 +549,7 @@ end
 
 module Hisoka_Cmd = struct
   let version = "alpha"
-  let root_doc = "the file hidder"
+  let root_doc = "the encrypted-file manager"
 
   type t = bool
 

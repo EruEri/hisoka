@@ -55,17 +55,31 @@ module External_Manager = struct
     let where = App.AppLocation.hisoka_extern_config_file |> PathBuf.to_string |> Option.some in
     Encryption.encrypt ~where ~key ~iv:encryption_iv data ()
 
+
+    (** 
+      [exist f list] is the as same as [List.exists] except that if the list is empty
+      it return true
+    *)
+    let exist f = function
+    | [] -> true
+    | files -> List.exists f files
+
+    (**
+      [filter ~fstrategy ~groups ~files manager] filters [manager] according to the [groups] and files
+      if [files] is empty, are the files in [manager] are matched
+    *)
     let filter ~fstrategy ~groups ~files manager = 
       let open Items.Item_Info in 
       let open Items.External_Item in
     {
       external_items = manager.external_items |> List.filter (fun eitem -> 
+        let is_exist = exist ( ( = ) eitem.info.name ) files in
         match groups with
-        | [] -> files |> List.exists ( ( = ) eitem.info.name )
+        | [] -> is_exist
         | groups -> 
           let egroups = StringSet.of_list eitem.info.groups in
           let filter_groups = StringSet.of_list groups in
-          fstrategy filter_groups egroups && List.exists ( ( = ) eitem.info.name ) files
+          fstrategy filter_groups egroups && is_exist 
       )
     }
 
@@ -74,14 +88,14 @@ module External_Manager = struct
     let open Items.External_Item in
     
     let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
+      let is_matched = exist ( ( = ) eitem.info.name ) files in
       match groups with
       | [] -> 
-        let exist = List.exists ( ( = ) eitem.info.name ) files in
-        if not exist then Either.left eitem else Either.right eitem.info
+        if not is_matched then Either.left eitem else Either.right eitem.info
       | groups -> 
         let egroups = StringSet.of_list eitem.info.groups in
         let filter_groups = StringSet.of_list groups in
-        match  fstrategy filter_groups egroups && List.exists ( ( = ) eitem.info.name ) files with
+        match  fstrategy filter_groups egroups && is_matched with
         | true -> Either.right eitem.info
         | false -> Either.left eitem
     ) in
