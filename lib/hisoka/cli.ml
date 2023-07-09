@@ -38,9 +38,10 @@ module Common = struct
     )
 
     let stragtegy_group_term = 
+      let default = Some Strategy.All in
       Arg.(
         required
-        & opt (some & enum Strategy.strategy_group_enum) None
+        & opt ~vopt:default (some & enum Strategy.strategy_group_enum) default
         & info ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
             ~doc:"filter strategy" [ "s"; "strategy" ]
       )
@@ -177,7 +178,6 @@ module Add_Cmd = struct
       let {groups; existing_groups; files} = cmd_add in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      (* checkher if existing groups exists *)
 
       let managers_groups = StringSet.of_list @@ Manager.Manager.groups manager in
       let futures_groups = StringSet.of_list existing_groups in
@@ -196,7 +196,7 @@ module Add_Cmd = struct
       ) manager in 
       let () = Manager.Manager.encrypt ~key:encrypted_key ~max_iter:3 ~raise_on_conflicts:true manager () in
 
-      let () = List.iter (Printf.printf "File: \"%s\" Added\n") files in
+      let () = List.iter (fun f -> Printf.printf "File: \"%s\" in groups [%s] Added\n" f (String.concat ", " groups)) files  in
       ()
 
 
@@ -253,12 +253,12 @@ module List_Cmd = struct
         items_list |> List.filter (fun item -> 
           let open Items.Item_Info in
           let igroups = StringSet.of_list item.groups in
-          Strategy.fstrategy strategy igroups filter_groups
+          Strategy.fstrategy strategy filter_groups igroups 
         )
       in
       let () = items_list |> List.iter (fun info -> 
         let open Items.Item_Info in
-        Printf.printf "group : [%s], name : %s, extension : %s\n" (String.concat ", " groups) info.name info.extension 
+        Printf.printf "group : [%s], name : %s, extension : %s\n" (String.concat ", " info.groups) info.name info.extension 
       )  in
       ()
 
@@ -394,7 +394,7 @@ module Delete_Cmd = struct
           s
           string_groups
         | Exact -> 
-          Printf.sprintf "Are you sure about deleting all files with exacttly the ollwing group%s: [%s]"
+          Printf.sprintf "Are you sure about deleting all files with exacttly the follwing group%s: [%s]"
           s
           string_groups
       in

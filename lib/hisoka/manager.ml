@@ -65,7 +65,7 @@ module External_Manager = struct
         | groups -> 
           let egroups = StringSet.of_list eitem.info.groups in
           let filter_groups = StringSet.of_list groups in
-          fstrategy egroups filter_groups && List.exists ( ( = ) eitem.info.name ) files
+          fstrategy filter_groups egroups && List.exists ( ( = ) eitem.info.name ) files
       )
     }
 
@@ -81,7 +81,7 @@ module External_Manager = struct
       | groups -> 
         let egroups = StringSet.of_list eitem.info.groups in
         let filter_groups = StringSet.of_list groups in
-        match  fstrategy egroups filter_groups && List.exists ( ( = ) eitem.info.name ) files with
+        match  fstrategy filter_groups egroups && List.exists ( ( = ) eitem.info.name ) files with
         | true -> Either.right eitem.info
         | false -> Either.left eitem
     ) in
@@ -101,7 +101,7 @@ module External_Manager = struct
       | groups -> 
         let egroups = StringSet.of_list eitem.info.groups in
         let filter_groups = StringSet.of_list groups in
-        if fstrategy egroups filter_groups then Either.right eitem.info else  Either.left eitem
+        if fstrategy filter_groups egroups then Either.right eitem.info else  Either.left eitem
     ) in 
     {
       external_items;
@@ -155,7 +155,7 @@ module Manager = struct
         | groups  ->
           let filter_groups = StringSet.of_list groups in
           let items_groups = StringSet.of_list ei.info.groups in
-          match Util.Strategy.fstrategy strategy items_groups filter_groups with
+          match Util.Strategy.fstrategy strategy filter_groups items_groups with
           | true -> Some (ei.info.name, decrypted_data)
           | false -> None
       end
@@ -193,8 +193,8 @@ module Manager = struct
       let data = Encryption.decrpty_file ~key ~iv:external_item.iv input_files_data () in
       match data with
       | Error exn -> raise exn
-      | Ok (None) -> raise (Error.(HisokaError (DecryptionError input_files_data) ) )
-      | Ok (Some decrypted_data) ->
+      | Ok None -> raise @@ Error.(hisoka_error @@ DecryptionError input_files_data )
+      | Ok Some decrypted_data ->
         Out_channel.with_open_bin outfile_path (fun oc -> 
           Printf.fprintf oc "%s" decrypted_data
         )
@@ -234,7 +234,7 @@ module Manager = struct
 
     let remove ~strategy ~groups files manager = 
       match groups, files with
-      | [], [] -> 
+      | _, [] -> 
       let external_manager, ex_deleted = External_Manager.exclude_group ~fstrategy:(Util.Strategy.fstrategy strategy) ~groups manager.external_manager in 
       {
         manager with
