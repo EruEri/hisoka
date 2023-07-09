@@ -18,14 +18,14 @@
 
 module Item_Info = struct
   type info = {
-    group: string option;
+    groups: string list;
     name: string;
     extension: string
   }[@@deriving yojson]
 
-  let create ?(group = None) ~extension name = 
+  let create ~groups ~extension name = 
     {
-      group;
+      groups;
       name;
       extension
     }
@@ -37,8 +37,8 @@ module Base_Item = struct
     data: string
   }[@@deriving yojson]
 
-  let create ?(group = None) ~name ~extension data = {
-    info = Item_Info.create ~group ~extension name;
+  let create ~groups ~name ~extension data = {
+    info = Item_Info.create ~groups ~extension name;
     data
   }
 
@@ -61,11 +61,11 @@ module External_Item = struct
 
   let compare lhs rhs = compare lhs.info rhs.info
 
-  let create ?(iv) ?(group = None) ~name ~extension encrypted_file_name = 
+  let create ?iv ~groups ~name ~extension encrypted_file_name = 
     let iv = match iv with Some iv -> iv | None -> Encryption.random_iv in
     {
       iv;
-      info = Item_Info.create ~group ~extension name;
+      info = Item_Info.create ~groups ~extension name;
       encrypted_file_name
     }
 

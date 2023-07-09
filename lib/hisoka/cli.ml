@@ -16,6 +16,36 @@
 (**********************************************************************************************)
 
 open Cmdliner
+open Util
+
+module Common = struct
+  let file_term ~docv ~doc = 
+    let linfo = 
+      Arg.info []
+      ~docv
+      ~doc
+    in
+    Arg.(non_empty & pos_all non_dir_file [] & linfo )
+
+  let groups_term ~docv ~doc = 
+    let ginfo =
+      Arg.info ["g"; "group"]
+      ~docv
+      ~doc
+    in
+    Arg.(
+      value & opt_all string [] & ginfo 
+    )
+
+    let stragtegy_group_term = 
+      Arg.(
+        required
+        & opt (some & enum Strategy.strategy_group_enum) None
+        & info ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
+            ~doc:"filter strategy" [ "s"; "strategy" ]
+      )
+
+end
 
 module Init_Cmd = struct
 
@@ -77,14 +107,8 @@ module Init_Cmd = struct
         | Error exn -> raise (Input.PassError exn) 
       in
       create_folder ~on_error:(Error.Create_folder hisoka_dir) hisoka_dir
-      >>= fun hisoka_dir -> 
-        let monolithic_file_path = PathBuf.push monolithic_file hisoka_dir in
-        let monolithic_manager = Manager.Monolitchic_Manager.create in
-        let data =  Manager.Monolitchic_Manager.encrypt ~key:encrypted_key monolithic_manager () in
-        create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Error.Create_file monolithic_file_path) monolithic_file_path
-      >>= fun monolithic_file_path ->
-        let app_dir = PathBuf.pop monolithic_file_path in
-        let external_file_path = PathBuf.push config_file app_dir in
+      >>= fun app_dir -> 
+        let external_file_path = PathBuf.push hisoka_rc app_dir in
         let external_manager = Manager.External_Manager.create in
         let data = Manager.External_Manager.encrypt ~key:encrypted_key external_manager () in
         create_file ~on_file:(fun oc -> output_string oc data) ~on_error:(Error.Create_file external_file_path) external_file_path
@@ -106,54 +130,32 @@ module Add_Cmd = struct
   let name = "add"
 
   type cmd_add = {
-    monolithic: bool;
-    group: string option;
-    download_url: string option;
-    file: string;
+    groups: string list;
+    existing_groups: string list;
+    files: string list;
   }
 
   type t = cmd_add
 
-  let monolithic_term =
-    let info = 
-      Arg.info ["m"; "mono"; "monolithic"]
-      ~doc:"whether the encrypted file should be merge within one big file containing others encrypted file"
-    in
-    Arg.value (Arg.flag info)
+  let existing_group_term = 
+      let einfo =
+        Arg.info ["g"; "group"]
+        ~docv:"EXISTING_GROUP"
+        ~doc:"Append the file to a group of file. The group must exist"
+      in
+      Arg.(
+        value & opt_all string [] & einfo 
+      )
 
-  let file_term = 
-    let info = 
-      Arg.info []
-      ~docv:"FILE"
-      ~doc:"file to encrypt"
-    in
-    Arg.required  ( Arg.pos  0 (Arg.some Arg.non_dir_file) None info) 
-
-  let download_url_term = 
-    let info = 
-      Arg.info ["url"]
-      ~docv:"URL"
-      ~doc:"Url of the file. \nurl option will download the file at the address $(opt) and save it as FILE"
-    in
-    Arg.value (Arg.opt (Arg.some Arg.string) None info )
-
-  let group_term = 
-    let info =
-      Arg.info ["g"; "group"]
-      ~docv:"GROUP"
-      ~doc:"Append the file to a group of file"
-    in
-    Arg.value (Arg.opt (Arg.some Arg.string) None info)
 
     let cmd_term run = 
-      let combine monolithic file download_url group = 
-        run @@ {monolithic; file; download_url; group}
+      let combine files existing_groups groups = 
+        run @@ { files; existing_groups; groups}
       in
-      Term.(const combine 
-        $ monolithic_term
-        $ file_term
-        $ download_url_term
-        $ group_term
+      Term.(const combine
+        $ Common.file_term ~docv:"Files" ~doc:("Files to add to hisoka")
+        $ existing_group_term
+        $ Common.groups_term ~docv:"groups" ~doc:""
     )
 
     let cmd_doc = "Add file to hisoka"
@@ -171,46 +173,45 @@ module Add_Cmd = struct
       Cmd.v info (cmd_term run)
 
     let run cmd_add = 
+      let module StringSet = Util.StringSet in
+      let {groups; existing_groups; files} = cmd_add in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      let manager = if 
-          Option.is_some cmd_add.download_url 
-        then 
-          failwith "Downlaod url not done" 
-          else 
-            let name, extension = Filename.basename cmd_add.file, Filename.extension cmd_add.file in 
-            Manager.Manager.add_item_from_file ~monolithic:cmd_add.monolithic ~group:cmd_add.group ~name ~extension ~file_name:cmd_add.file manager
-        in
+      (* checkher if existing groups exists  *)
+
+      let groups = groups |> List.rev_append existing_groups |> StringSet.of_list |> StringSet.elements in
+      let manager = files |> List.fold_left (fun manager file ->
+        let name, extension = Filename.basename file, Filename.extension file in 
+        Manager.Manager.add_item_from_file ~groups:groups ~name ~extension ~file_name:file manager
+      ) manager in 
       let () = Manager.Manager.encrypt ~key:encrypted_key ~max_iter:3 ~raise_on_conflicts:true manager () in
-      Printf.printf "File: \"%s\" Added\n" cmd_add.file
+
+      let () = List.iter (Printf.printf "File: \"%s\" Added\n") files in
+      ()
+
 
     let command = cmd run
       
 end
 
 module List_Cmd = struct
+
   let name = "list"
 
   type cmd_list = {
-    group: string option; 
+    strategy: Strategy.strategy_group;
+    groups: string list; 
   }
 
   type t = cmd_list
 
-  let group_term = 
-    let info =
-      Arg.info ["g"; "group"]
-      ~docv:"GROUP"
-      ~doc:"List all the file belonging to $(SOURCE)"
-    in
-    Arg.value (Arg.opt (Arg.some Arg.string) None info)
-
   let cmd_term run = 
-    let combine group = 
-      run @@ {group}
+    let combine strategy groups = 
+      run @@ {strategy; groups}
     in
     Term.(const combine
-      $ group_term
+      $ Common.stragtegy_group_term
+      $ Common.groups_term ~docv:"" ~doc:""
     )
 
     let cmd_doc = "Display the list of encrypted files"
@@ -229,21 +230,25 @@ module List_Cmd = struct
 
 
     let run cmd_list = 
+      let module StringSet = Util.StringSet in
       let () = App.App.check_app_initialized () in
+      let {strategy; groups} = cmd_list in 
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
       let items_list = Manager.Manager.list_info manager in
-      let items_list = match cmd_list.group with
-      | None -> items_list
-      | Some _ as group -> 
+      let items_list = match groups with
+      | [] -> items_list
+      | groups -> 
+        let filter_groups = StringSet.of_list groups in
         items_list |> List.filter (fun item -> 
           let open Items.Item_Info in
-          item.group = group
+          let igroups = StringSet.of_list item.groups in
+          Strategy.fstrategy strategy igroups filter_groups
         )
       in
       let () = items_list |> List.iter (fun info -> 
         let open Items.Item_Info in
-        Printf.printf "group : %s, name : %s, extension : %s\n" (Option.value ~default:"null" info.group) info.name info.extension 
+        Printf.printf "group : [%s], name : %s, extension : %s\n" (String.concat ", " groups) info.name info.extension 
       )  in
       ()
 
@@ -254,23 +259,16 @@ module Decrypt_Cmd = struct
   let name = "decrypt"
 
   type cmd_decrypt = {
-    group: string option;
+    groups: string list;
+    strategy: Strategy.strategy_group;
     out_dir: string option;
     files: string list;
   }
 
   type t = cmd_decrypt
 
-  let group_term = 
-    let info =
-      Arg.info ["g"; "group"]
-      ~docv:"GROUP"
-      ~doc:"Decrypt all files belonging to GROUP"
-    in
-    Arg.value (Arg.opt (Arg.some Arg.string) None info)
-
   let files_term = 
-    Arg.(non_empty & pos_all string [] & info [] ~docv:"FILES" ~doc:"Decrypt all the files")
+    Arg.(non_empty & pos_all string [] & info [] ~docv:"FILES" )
 
   let out_dir_term = 
     Arg.(value 
@@ -283,12 +281,13 @@ module Decrypt_Cmd = struct
     )
 
   let cmd_term run = 
-    let combine group files out_dir = 
-      run @@ {group; files; out_dir}
+    let combine groups strategy files out_dir = 
+      run @@ {groups; strategy; files; out_dir}
     in
     Term.(const combine
-      $ group_term
-      $ files_term
+      $ Common.groups_term ~docv:""  ~doc:"Decrypt all files belonging to GROUP"
+      $ Common.stragtegy_group_term
+      $ Common.file_term ~docv:"FILES" ~doc:"Decrypt all the files"
       $ out_dir_term
     )
 
@@ -308,16 +307,18 @@ module Decrypt_Cmd = struct
 
     let run decrypt_cmd = 
       let () = App.App.check_app_initialized () in
+      let {groups; strategy; files; out_dir} = decrypt_cmd in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      let manager_filtered = Manager.Manager.fetch_group_files 
-        ~group:(decrypt_cmd.group)
-        ~files:decrypt_cmd.files
+      let manager_filtered = Manager.Manager.fetch_group_files
+        ~strategy
+        ~groups
+        ~files
         manager
     in
     match Manager.Manager.is_empty manager_filtered with
     | false ->
-      let outdir = Option.value ~default:(Sys.getcwd ()) decrypt_cmd.out_dir in
+      let outdir = Option.value ~default:(Sys.getcwd ()) out_dir in
       let () = Manager.Manager.decrypt_files ~dir_path:outdir ~key:encrypted_key manager_filtered () in
       ()
     | true -> raise (Error.(HisokaError No_file_to_decrypt))
@@ -329,7 +330,8 @@ module Delete_Cmd = struct
   let name = "delete"
 
   type cmd_delete = {
-    group: string option;
+    groups: string list;
+    strategy: Strategy.strategy_group;
     files: string list;
   }
 
@@ -339,14 +341,15 @@ module Delete_Cmd = struct
     Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete")
 
   let group_term = 
-    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Delete files belonging to GROUP. If no$(b, FILES) is provided, $(opt) will delete all$(b, FILES) in $(docv)")
+    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" )
 
   let cmd_term run = 
-      let combine group files = 
-        run @@ {group; files}
+      let combine groups strategy files = 
+        run @@ {groups; strategy; files}
       in
       Term.(const combine
-        $ group_term
+        $ Common.groups_term ~docv:"GROUP" ~doc:"Delete files belonging to GROUP. If no$(b, FILES) is provided, $(opt) will delete all$(b, FILES) in $(docv)"
+        $ Common.stragtegy_group_term
         $ files_term
       )
 
@@ -367,15 +370,32 @@ module Delete_Cmd = struct
 
     let run delete_cmd =
       let () = App.App.check_app_initialized () in
-      let delete_all_in_group = Option.is_some delete_cmd.group && delete_cmd.files = [] in
+      let {groups; strategy; files} = delete_cmd in
+      let delete_all_in_group = groups <> [] && delete_cmd.files = [] in
+      let string_groups = String.concat ", " groups in
+      let s =  (match groups with [] | _::[] -> "" | _ -> "s") in
+      let prompt = match strategy with
+        | Strategy.All -> 
+          Printf.sprintf "Are you sure about deleting all files contains [%s] as group%s"
+          string_groups
+          s
+        | Any -> 
+          Printf.sprintf "Are you sure about deleting all files contains at least one of the follwing group%s: [%s]"
+          s
+          string_groups
+        | Exact -> 
+          Printf.sprintf "Are you sure about deleting all files with exacttly the ollwing group%s: [%s]"
+          s
+          string_groups
+      in
       let () = if delete_all_in_group then
-        let continue = Input.confirm_choice ~continue_on_wrong_input:(Input.Continue (Some "Wrong input") ) ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:(Printf.sprintf "Are you sure about deleting all files in group : %s" (Option.get delete_cmd.group) ) () in
+        let continue = Input.confirm_choice ~continue_on_wrong_input:(Input.Continue (Some "Wrong input") ) ~case_insensible:true ~yes:'y' ~no:'n' ~prompt () in
         if not continue then 
           raise Error.(HisokaError No_Option_choosen)
       in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      let filtered_manager, deleted_files_info = Manager.Manager.remove ~group:delete_cmd.group delete_cmd.files manager in
+      let filtered_manager, deleted_files_info = Manager.Manager.remove ~strategy ~groups files manager in
       match deleted_files_info with
       | [] -> print_endline "No files to delete"
       | deleted_files_info ->
