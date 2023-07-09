@@ -16,7 +16,7 @@
 (**********************************************************************************************)
 
 
-module Item_Info = struct
+module Info = struct
   type info = {
     groups: string list;
     name: string;
@@ -31,31 +31,10 @@ module Item_Info = struct
     }
 end
 
-module Base_Item = struct
-  type base_item = {
-    info: Item_Info.info;
-    data: string
-  }[@@deriving yojson]
-
-  let create ~groups ~name ~extension data = {
-    info = Item_Info.create ~groups ~extension name;
-    data
-  }
-
-  let compare lhs rhs = compare lhs.info rhs.info
-
-  let to_string item =
-  item |> base_item_to_yojson |> Yojson.Safe.to_string 
-
-  let of_string bytes = 
-    bytes |> Yojson.Safe.from_string |> base_item_of_yojson |> Result.get_ok
-end
-
-
-module External_Item = struct
-  type extern_item = {
+module External = struct
+  type external_item = {
     iv: string;
-    info: Item_Info.info;
+    info: Info.info;
     encrypted_file_name: string
   }[@@deriving yojson]
 
@@ -65,15 +44,15 @@ module External_Item = struct
     let iv = match iv with Some iv -> iv | None -> Encryption.random_iv in
     {
       iv;
-      info = Item_Info.create ~groups ~extension name;
+      info = Info.create ~groups ~extension name;
       encrypted_file_name
     }
 
 
   let to_string item =
-    item |> extern_item_to_yojson |> Yojson.Safe.to_string 
+    item |> external_item_to_yojson |> Yojson.Safe.to_string 
   
   let of_string bytes = 
-    bytes |> Yojson.Safe.from_string |> extern_item_of_yojson |> Result.get_ok
+    bytes |> Yojson.Safe.from_string |> external_item_of_yojson |> Result.get_ok
 
 end

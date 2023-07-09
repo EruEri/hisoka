@@ -22,7 +22,7 @@ module External_Manager = struct
   let encryption_iv = String.init 12 (fun index -> Char.chr ( (index + 1) mod 256))
 
   type external_manager = {
-    external_items: Items.External_Item.extern_item list
+    external_items: Items.External.external_item list
   }[@@deriving yojson]
 
 
@@ -34,7 +34,7 @@ module External_Manager = struct
     @raise Hisoka_Error.Already_Existing_name if the id is already in the manager
 *)
   let append item manager = 
-    match List.find_opt (fun bitem -> bitem |> Items.External_Item.compare item |> ( = ) 0) manager.external_items with 
+    match List.find_opt (fun bitem -> bitem |> Items.External.compare item |> ( = ) 0) manager.external_items with 
     | None -> { external_items = item::manager.external_items }
     | Some _ -> raise (Error.HisokaError (Error.Already_Existing_name item.info.name))
 
@@ -69,8 +69,8 @@ module External_Manager = struct
       if [files] is empty, are the files in [manager] are matched
     *)
     let filter ~fstrategy ~groups ~files manager = 
-      let open Items.Item_Info in 
-      let open Items.External_Item in
+      let open Items.Info in 
+      let open Items.External in
     {
       external_items = manager.external_items |> List.filter (fun eitem -> 
         let is_exist = exist ( ( = ) eitem.info.name ) files in
@@ -84,8 +84,8 @@ module External_Manager = struct
     }
 
   let exclude ~fstrategy ~groups ~files manager = 
-    let open Items.Item_Info in 
-    let open Items.External_Item in
+    let open Items.Info in 
+    let open Items.External in
     
     let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
       let is_matched = exist ( ( = ) eitem.info.name ) files in
@@ -107,8 +107,8 @@ module External_Manager = struct
     excluded all the items in [manager] which are contained in [groups]
   *)
   let exclude_group ~fstrategy ~groups manager = 
-    let open Items.Item_Info in 
-    let open Items.External_Item in
+    let open Items.Info in 
+    let open Items.External in
     let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
       match groups with
       | [] -> Either.left eitem
@@ -151,14 +151,14 @@ module Manager = struct
   exception Existing_Files of commit list
 
   let list_info manager = 
-    manager.external_manager.external_items |> List.map (fun ei -> ei.Items.External_Item.info)
+    manager.external_manager.external_items |> List.map (fun ei -> ei.Items.External.info)
 
   (**
       @raise HisokaError.Missing_file if a file which was external encrypted is missing
   *)
   let list_name_data ~strategy ~key ~groups  manager =
     manager.external_manager.external_items |> List.filter_map (fun ei ->
-      let open Items.External_Item in
+      let open Items.External in
       let input_files_data = PathBuf.to_string @@ PathBuf.push ei.encrypted_file_name App.AppLocation.hisoka_data_dir in
       let data = Encryption.decrpty_file ~key ~iv:ei.iv input_files_data () in
       match data with
@@ -201,7 +201,7 @@ module Manager = struct
   let decrypt_files ~dir_path ~key manager () =
 
     let () = manager.external_manager.external_items |> List.iter (fun external_item -> 
-      let open Items.External_Item in
+      let open Items.External in
       let outfile_path = Filename.concat dir_path external_item.info.name in
       let input_files_data = PathBuf.to_string @@ PathBuf.push external_item.encrypted_file_name App.AppLocation.hisoka_data_dir in
       let data = Encryption.decrpty_file ~key ~iv:external_item.iv input_files_data () in
@@ -232,7 +232,7 @@ module Manager = struct
     in 
 
     let external_items, to_encrypted_data = good_files |> List.map (fun (encrypted_name, commit) -> 
-      let item = Items.External_Item.create ~groups:commit.groups ~name:commit.name ~extension:commit.extension encrypted_name in
+      let item = Items.External.create ~groups:commit.groups ~name:commit.name ~extension:commit.extension encrypted_name in
       item, (encrypted_name, item.iv, commit.plain_data)
     ) |> List.split in
     
@@ -271,7 +271,7 @@ module Manager = struct
       let groups manager = 
         manager.external_manager.external_items
         |> List.fold_left (fun set item ->
-          let open Items.External_Item in
+          let open Items.External in
           item.info.groups
           |> StringSet.of_list
           |> StringSet.union  set 

@@ -257,13 +257,13 @@ module List_Cmd = struct
       | groups -> 
         let filter_groups = StringSet.of_list groups in
         items_list |> List.filter (fun item -> 
-          let open Items.Item_Info in
+          let open Items.Info in
           let igroups = StringSet.of_list item.groups in
           Strategy.fstrategy strategy filter_groups igroups 
         )
       in
       let () = items_list |> List.iter (fun info -> 
-        let open Items.Item_Info in
+        let open Items.Info in
         Printf.printf "group : [%s], name : %s, extension : %s\n" (String.concat ", " info.groups) info.name info.extension 
       )  in
       ()
@@ -421,7 +421,10 @@ module Delete_Cmd = struct
       match deleted_files_info with
       | [] -> print_endline "No files to delete"
       | deleted_files_info ->
-        let string_of_files = let open Items.Item_Info in (deleted_files_info |> List.map (fun {name; _} -> name) |> String.concat ", ")  in
+        let string_of_files = 
+          let open Items.Info in 
+          (deleted_files_info |> List.map (fun {name; _} -> name) |> String.concat ", ")  
+        in
         let deleting_file_format = 
           Printf.sprintf "Following files will be deleted : %s " string_of_files
         in
