@@ -139,7 +139,7 @@ module Add_Cmd = struct
 
   let existing_group_term = 
       let einfo =
-        Arg.info ["g"; "group"]
+        Arg.info ["e"; "existing-group"]
         ~docv:"EXISTING_GROUP"
         ~doc:"Append the file to a group of file. The group must exist"
       in
@@ -177,7 +177,17 @@ module Add_Cmd = struct
       let {groups; existing_groups; files} = cmd_add in
       let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
       let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-      (* checkher if existing groups exists  *)
+      (* checkher if existing groups exists *)
+
+      let managers_groups = StringSet.of_list @@ Manager.Manager.groups manager in
+      let futures_groups = StringSet.of_list existing_groups in
+
+      let diff = StringSet.diff futures_groups managers_groups in
+      let () = match StringSet.is_empty diff with
+      | true -> ()
+      | false ->
+        raise @@ Error.(hisoka_error @@ Non_existing_group (StringSet.elements diff))
+      in
 
       let groups = groups |> List.rev_append existing_groups |> StringSet.of_list |> StringSet.elements in
       let manager = files |> List.fold_left (fun manager file ->
