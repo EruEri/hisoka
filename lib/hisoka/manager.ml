@@ -142,7 +142,7 @@ module Manager = struct
   (**
       @raise HisokaError.Missing_file if a file which was external encrypted is missing
   *)
-  let list_name_data ~key ~groups  manager =
+  let list_name_data ~strategy ~key ~groups  manager =
     manager.external_manager.external_items |> List.filter_map (fun ei ->
       let open Items.External_Item in
       let input_files_data = PathBuf.to_string @@ PathBuf.push ei.encrypted_file_name App.AppLocation.hisoka_data_dir in
@@ -155,7 +155,7 @@ module Manager = struct
         | groups  ->
           let filter_groups = StringSet.of_list groups in
           let items_groups = StringSet.of_list ei.info.groups in
-          match StringSet.subset filter_groups items_groups with
+          match Util.Strategy.fstrategy strategy items_groups filter_groups with
           | true -> Some (ei.info.name, decrypted_data)
           | false -> None
       end

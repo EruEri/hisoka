@@ -419,7 +419,8 @@ module Display_Cmd = struct
 
   type display_cmd = {
     pixel_mode: Cbindings.Display.pixel_mode;
-    group: string option;
+    strategy: Strategy.strategy_group;
+    groups: string list;
     files: string list;
   }
 
@@ -441,27 +442,16 @@ module Display_Cmd = struct
           ~doc:("Specify the pixel mode to use to render the image. " ^ doc_alts_enum ~quoted:true pixel_modes)
           [ "m"; "mode" ])
 
-
-  let group_term = 
-    Arg.(value & opt (some string) None & info ["g"; "group"] ~docv:"GROUP" ~doc:"Render files belonging to GROUP")
-
   let cmd_term run = 
-    let combine pixel_mode group files = 
-      run @@ {pixel_mode; group; files}
+    let combine pixel_mode strategy groups files = 
+      run @@ {pixel_mode; strategy; groups; files}
     in
     Term.(const combine
       $ pixel_mode
-      $ group_term
+      $ Common.stragtegy_group_term
+      $ Common.groups_term ~docv:"GROUP" ~doc:"Render files belonging to GROUP"
       $ files_term
     )
-
-  let group_term = 
-    let info =
-      Arg.info ["g"; "group"]
-      ~docv:"GROUP"
-      ~doc:"List all the file belonging to $(SOURCE)"
-    in
-    Arg.value (Arg.opt (Arg.some Arg.string) None info)
 
 
   let cmd_doc = "Display files in the terminals"
@@ -481,11 +471,15 @@ module Display_Cmd = struct
 
   let run cmd = 
     let () = App.App.check_app_initialized () in
+    let {pixel_mode; strategy; groups; files} = cmd in
     let encrypted_key = Input.ask_password_encrypted ~prompt:"Enter the master password : " () in
     let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-    let items_list = Manager.Manager.list_name_data ~key:encrypted_key ~group:cmd.group manager in
-    let items_list = if cmd.files = [] then items_list else items_list |> List.filter (fun (s, _) -> List.mem s cmd.files) in
-    let () = Cbindings.Display.hisoka_show items_list (List.length items_list) cmd.pixel_mode () in
+    let items_list = Manager.Manager.list_name_data ~strategy ~key:encrypted_key ~groups manager in
+    let items_list = match files with
+      | [] -> items_list
+      | files -> items_list |> List.filter (fun (s, _) -> List.mem s files) 
+    in 
+    let () = Cbindings.Display.hisoka_show items_list (List.length items_list) pixel_mode () in
     ()
 
   let command = cmd run
