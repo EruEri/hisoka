@@ -29,8 +29,9 @@ type error =
 | Hisoka_Not_Initialized
 | DecryptionError of string
 | Already_Existing_name of string
-| Missing_file of { true_name : string; encrypted_name: string}
+| Missing_file of { true_name : string; encrypted_name: string }
 | Init_Error of init_error
+| Non_existing_group of string list
 
 let string_of_init_error = function
 | App_folder_already_exist -> 
@@ -53,8 +54,19 @@ let string_of_error = function
 | Already_Existing_name filename -> Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
 | Missing_file {true_name; encrypted_name} -> Printf.sprintf "Filename: \"%s\" is missing: This file encrypted: \"%s\"" encrypted_name true_name
 | Init_Error init ->  string_of_init_error init
+| Non_existing_group groups ->
+  let s, does = match groups with
+    | [] | _::[] -> "", "doesn't"
+    | _ -> "s", "don't"
+  in
+  Printf.sprintf "The following group%s %s exist: [%s]"
+  s
+  does
+  (String.concat ", " groups)
 
 exception HisokaError of error
+
+let hisoka_error e = HisokaError e
 
 let register_exn () = Printexc.register_printer (function
 | HisokaError error -> error |> string_of_error |> Option.some

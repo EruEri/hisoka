@@ -30,10 +30,10 @@ module AppLocation = struct
   let app_folder = ".hisoka"
 
   let data_folder = ".data"
-  let config_file = ".hisoka_extern_rc"
+  let hisoka_rc = ".hisokarc"
   let monolithic_file = ".hisokamono"
   let hisoka_dir = PathBuf.from_list [hisoka_dir]
-  let hisoka_extern_config_file = PathBuf.push config_file hisoka_dir
+  let hisoka_extern_config_file = PathBuf.push hisoka_rc hisoka_dir
   let hisoka_mono_file = PathBuf.push monolithic_file hisoka_dir
   let hisoka_data_dir = PathBuf.push data_folder hisoka_dir
 end

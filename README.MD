@@ -34,33 +34,28 @@ To add a file, use the ```add``` subcommand
 ```
 $ hisoka add --help
 NAME
-       hisoka-add - Add file to hisoka
+       hisoka-add - Add files to hisoka
 
 SYNOPSIS
-       hisoka add [--group=GROUP] [--mono] [--url=URL] [OPTION]… FILE
+       hisoka add [--existing-group=EXISTING_GROUP] [--group=GROUP]
+       [OPTION]… FILES…
 
 DESCRIPTION
-       Add file to hisoka
+       Add files to hisoka
 
 ARGUMENTS
-       FILE (required)
-           file to encrypt
+       FILES (required)
+           Files to add to hisoka
 
 OPTIONS
+       -e EXISTING_GROUP, --existing-group=EXISTING_GROUP
+           Append the file to the group EXISTING_GROUP. The group must exist
+
        -g GROUP, --group=GROUP
-           Append the file to a group of file
-
-       -m, --monolithic, --mono
-           whether the encrypted file should be merge within one big file
-           containing others encrypted file
-
-       --url=URL
-           Url of the file. url option will download the file at the address
-           --url and save it as FILE
+           Append the file to the group GROUP
 ```
-Hisoka has two strategies to store files. The first one, is to store each file individually. The other one, _monolithic_, is to store each files in one big file.
 
-Also, each file can be added in a group which allow to later filter by the group.
+Each file can be added in one or several groups which allow to later filter by the group.
 
 ### - **Decrypt**
 To restore encrypted files, use the ```decrypt``` subcommand
@@ -70,14 +65,16 @@ NAME
        hisoka-decrypt - Decrypt encrypted files
 
 SYNOPSIS
-       hisoka decrypt [--group=GROUP] [--out-dir=DIRECTORY] [OPTION]… FILES…
+       hisoka decrypt [--group=GROUP] [--out-dir=DIRECTORY]
+       [--strategy[=any|all|exact]] [OPTION]… [FILES]…
 
 DESCRIPTION
        Decrypt encrypted files
 
 ARGUMENTS
-       FILES (required)
-           Decrypt all the files
+       FILES
+           Files to decrypt. If no file is provided, all the files which are
+           matched by the groups and strategy will be decrypted
 
 OPTIONS
        -g GROUP, --group=GROUP
@@ -85,6 +82,14 @@ OPTIONS
 
        --out-dir=DIRECTORY (absent=current directory)
            Write decrypted files in the given DIRECTORY
+
+       -s [any|all|exact], --strategy[=any|all|exact] (default=all)
+       (required)
+           the filter strategy to apply. "any" matches if at least one of the
+           given groups belongs to the group of the file. "all" matches if
+           all the given groups belongs to the group of the file. "exact"
+           matches if exactly all the given groups are the same groups as the
+           file
 ```
 
 ### - **Display**
@@ -96,10 +101,11 @@ NAME
        hisoka-display - Display files in the terminals
 
 SYNOPSIS
-       hisoka display [--group=GROUP] [--mode[=Pixel Mode]] [OPTION]… [FILES]…
+       hisoka display [--group=GROUP] [--mode[=Pixel Mode]]
+       [--strategy[=any|all|exact]] [OPTION]… [FILES]…
 
 DESCRIPTION
-       Display allows you to show files within hisoka directly into the
+       Display allows you to show files within hisoka directly in the
        terminal
 
 ARGUMENTS
@@ -113,6 +119,14 @@ OPTIONS
        -m [Pixel Mode], --mode[=Pixel Mode] (default=none) (required)
            Specify the pixel mode to use to render the image. one of 'iterm',
            'kitty', 'sixel' or 'none'
+
+       -s [any|all|exact], --strategy[=any|all|exact] (default=all)
+       (required)
+           the filter strategy to apply. "any" matches if at least one of the
+           given groups belongs to the group of the file. "all" matches if
+           all the given groups belongs to the group of the file. "exact"
+           matches if exactly all the given groups are the same groups as the
+           file
 ```
 
 ### - **Other**
@@ -120,13 +134,14 @@ There are other subcommands but those 3 explain pretty much how hisoka works.
 
 
 ## How to build
-- First you will need Ocaml >= 5.0.0 and install those opam packages.
+- First you will need to install those opam packages.
     ```sh
     $ opam install cryptokit dune xdg yojson cmdliner ppx_deriving_yojson
     ```
 
 - You will also need to install those C libraries:
   - [Chafa](https://github.com/hpjansson/chafa)
+    - Chafa >= 1.12.4
   - [ImageMagick](https://github.com/imagemagick/imagemagick)
     - ImageMagick >= 7.0.0
     
