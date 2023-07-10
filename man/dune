@@ -15,7 +15,6 @@
 ;*                                                                                            *;
 ;**********************************************************************************************;
 
-
 (rule
  (with-stdout-to
   hisoka.1
@@ -24,7 +23,6 @@
 (install
  (section man)
  (files hisoka.1))
-
 
 (rule
  (with-stdout-to
@@ -35,7 +33,6 @@
  (section man)
  (files hisoka-add.1))
 
-
 (rule
  (with-stdout-to
   hisoka-decrypt.1
@@ -44,7 +41,6 @@
 (install
  (section man)
  (files hisoka-decrypt.1))
-
 
 (rule
  (with-stdout-to

@@ -18,12 +18,10 @@
 type pathbuf = string list
 
 let pop : pathbuf -> pathbuf = List.tl
-
-let push: string -> pathbuf -> pathbuf = List.cons
-
+let push : string -> pathbuf -> pathbuf = List.cons
 let to_string pathbuf = pathbuf |> List.rev |> String.concat Filename.dir_sep
+let create name : pathbuf = [ name ]
+let from_list l = l |> List.rev
 
-let create name: pathbuf = [name]
-let from_list l = l |> List.rev 
-
-let exists_in ~file ~pathbuf = Sys.file_exists (pathbuf |> push file |> to_string)
+let exists_in ~file ~pathbuf =
+  Sys.file_exists (pathbuf |> push file |> to_string)

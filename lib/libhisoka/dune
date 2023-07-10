@@ -17,6 +17,13 @@
 
 (library
  (name libhisoka)
- (libraries cryptokit yojson ppx_deriving_yojson.runtime cmdliner cbindings xdg)
- (preprocess (pps ppx_deriving_yojson))
- )
+ (libraries
+  cryptokit
+  yojson
+  ppx_deriving_yojson.runtime
+  cmdliner
+  cbindings
+  xdg
+  dune-build-info)
+ (preprocess
+  (pps ppx_deriving_yojson)))

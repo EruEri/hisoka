@@ -15,64 +15,57 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module StringSet = Set.Make(String)
+module StringSet = Set.Make (String)
 
 module Strategy = struct
-  type strategy_group = 
-  | Any
-  | All
-  | Exact
+  type strategy_group = Any | All | Exact
 
-  let strategy_group_enum = 
-    [
-      ("any", Any);
-      ("all", All);
-      ("exact", Exact)
-    ]
+  let strategy_group_enum = [ ("any", Any); ("all", All); ("exact", Exact) ]
 
   let fstrategy = function
-  | Any -> fun lhs rhs -> not @@ StringSet.disjoint lhs rhs
-  | All -> StringSet.subset
-  | Exact -> StringSet.equal
+    | Any ->
+        fun lhs rhs -> not @@ StringSet.disjoint lhs rhs
+    | All ->
+        StringSet.subset
+    | Exact ->
+        StringSet.equal
 end
 
-
 module Hash = struct
-  let hash_name ~name ~extension = 
-    let extension = if extension = String.empty then String.empty else "." ^ extension in
-    let hash_name = (name ^ extension) |> Digest.string |> Digest.to_hex in
-    (Printf.sprintf "%s" hash_name)
-  
-  let rec generate_unique_name ?(max_iter = 3) ~extension ~name path = 
-  if max_iter <= 0 then None
-  else
-    let hashed_name = hash_name ~name ~extension in
-    let file_full_path = PathBuf.to_string @@ PathBuf.push hashed_name path in
-    if 
-      not @@ Sys.file_exists file_full_path 
-    then
-      Some hashed_name
+  let hash_name ~name ~extension =
+    let extension =
+      if extension = String.empty then
+        String.empty
+      else
+        "." ^ extension
+    in
+    let hash_name = name ^ extension |> Digest.string |> Digest.to_hex in
+    Printf.sprintf "%s" hash_name
+
+  let rec generate_unique_name ?(max_iter = 3) ~extension ~name path =
+    if max_iter <= 0 then
+      None
     else
-      generate_unique_name ~max_iter:(max_iter - 1) ~name:hashed_name ~extension path
+      let hashed_name = hash_name ~name ~extension in
+      let file_full_path = PathBuf.to_string @@ PathBuf.push hashed_name path in
+      if not @@ Sys.file_exists file_full_path then
+        Some hashed_name
+      else
+        generate_unique_name ~max_iter:(max_iter - 1) ~name:hashed_name
+          ~extension path
 end
 
 module Format = struct
-  
-let string_of_enum ?(splitter = "|") ?(quoted = false) enum =
-  let f =
-    if quoted then
-      Cmdliner.Arg.doc_quote
-    else
-      Fun.id
-  in
-  enum |> List.map (fun (elt, _) -> f elt) |> String.concat splitter
+  let string_of_enum ?(splitter = "|") ?(quoted = false) enum =
+    let f =
+      if quoted then
+        Cmdliner.Arg.doc_quote
+      else
+        Fun.id
+    in
+    enum |> List.map (fun (elt, _) -> f elt) |> String.concat splitter
 end
 
 module Io = struct
-  let read_file ch () = 
-    really_input_string ch (in_channel_length ch)
+  let read_file ch () = really_input_string ch (in_channel_length ch)
 end
-
-
-
-

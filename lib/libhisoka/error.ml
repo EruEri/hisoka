@@ -15,62 +15,66 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
+type init_error =
+  | App_folder_already_exist
+  | Create_folder of PathBuf.pathbuf
+  | Create_file of PathBuf.pathbuf
+  | EncryptionError of PathBuf.pathbuf
 
-type init_error = 
-| App_folder_already_exist
-| Create_folder of PathBuf.pathbuf
-| Create_file of PathBuf.pathbuf
-| EncryptionError of PathBuf.pathbuf
-
-
-type error = 
-| No_Option_choosen
-| No_file_to_decrypt
-| Hisoka_Not_Initialized
-| DecryptionError of string
-| Already_Existing_name of string
-| Missing_file of { true_name : string; encrypted_name: string }
-| Init_Error of init_error
-| Non_existing_group of string list
+type error =
+  | No_Option_choosen
+  | No_file_to_decrypt
+  | Hisoka_Not_Initialized
+  | DecryptionError of string
+  | Already_Existing_name of string
+  | Missing_file of { true_name : string; encrypted_name : string }
+  | Init_Error of init_error
+  | Non_existing_group of string list
 
 let string_of_init_error = function
-| App_folder_already_exist -> 
-  "\".hisoka\" directory already exists"
-| Create_folder path ->
-  Printf.sprintf "Unable to create directory : %s" (PathBuf.to_string path)
-| Create_file path ->
-  Printf.sprintf "Unable to create file : %s" (PathBuf.to_string path)
-| EncryptionError path ->
-  Printf.sprintf "Unable to encrypt file : %s" (PathBuf.to_string path)
-
-
-
+  | App_folder_already_exist ->
+      "\".hisoka\" directory already exists"
+  | Create_folder path ->
+      Printf.sprintf "Unable to create directory : %s" (PathBuf.to_string path)
+  | Create_file path ->
+      Printf.sprintf "Unable to create file : %s" (PathBuf.to_string path)
+  | EncryptionError path ->
+      Printf.sprintf "Unable to encrypt file : %s" (PathBuf.to_string path)
 
 let string_of_error = function
-| Hisoka_Not_Initialized -> Printf.sprintf "\".hisoka\" directory doesn't exist. Use hisoka init to initialize"
-| No_Option_choosen -> "Operation Aborted"
-| No_file_to_decrypt -> Printf.sprintf "No File to decrypt"
-| DecryptionError file -> Printf.sprintf "decrptytion error : %s" file
-| Already_Existing_name filename -> Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
-| Missing_file {true_name; encrypted_name} -> Printf.sprintf "Filename: \"%s\" is missing: This file encrypted: \"%s\"" encrypted_name true_name
-| Init_Error init ->  string_of_init_error init
-| Non_existing_group groups ->
-  let s, does = match groups with
-    | [] | _::[] -> "", "doesn't"
-    | _ -> "s", "don't"
-  in
-  Printf.sprintf "The following group%s %s exist: [%s]"
-  s
-  does
-  (String.concat ", " groups)
+  | Hisoka_Not_Initialized ->
+      Printf.sprintf
+        "\".hisoka\" directory doesn't exist. Use hisoka init to initialize"
+  | No_Option_choosen ->
+      "Operation Aborted"
+  | No_file_to_decrypt ->
+      Printf.sprintf "No File to decrypt"
+  | DecryptionError file ->
+      Printf.sprintf "decrptytion error : %s" file
+  | Already_Existing_name filename ->
+      Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
+  | Missing_file { true_name; encrypted_name } ->
+      Printf.sprintf "Filename: \"%s\" is missing: This file encrypted: \"%s\""
+        encrypted_name true_name
+  | Init_Error init ->
+      string_of_init_error init
+  | Non_existing_group groups ->
+      let s, does =
+        match groups with [] | _ :: [] -> ("", "doesn't") | _ -> ("s", "don't")
+      in
+      Printf.sprintf "The following group%s %s exist: [%s]" s does
+        (String.concat ", " groups)
 
 exception HisokaError of error
 
 let hisoka_error e = HisokaError e
 
-let register_exn () = Printexc.register_printer (function
-| HisokaError error -> error |> string_of_error |> Option.some
-| _ -> None 
-)
+let register_exn () =
+  Printexc.register_printer (function
+    | HisokaError error ->
+        error |> string_of_error |> Option.some
+    | _ ->
+        None
+    )
 
 let register_exn = register_exn ()

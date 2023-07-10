@@ -25,37 +25,42 @@ let aes_string_encrypt s () =
 
 let default_iv = String.init iv_size (fun _ -> Char.chr 0)
 
-let random_iv () = String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr )
+let random_iv () =
+  String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr)
 
-
-let encrypt ?(where = None) ~key ~iv data () = 
+let encrypt ?(where = None) ~key ~iv data () =
   let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
   let encrypted_data = Cryptokit.auth_transform_string e data in
   match where with
-  | None -> encrypted_data
-  | Some where -> 
-    let () = Out_channel.with_open_bin where (fun channel -> 
-      output_string channel encrypted_data
-    ) in
-    encrypted_data
-let encrypt_file ?(where = None) ~key ~iv file () = 
-  match open_in_bin file with
-  | exception exn -> Error exn
-  | file -> 
-    let raw_data = Util.Io.read_file file () in
-    let () = close_in file in
-    Ok (encrypt ~where ~key ~iv raw_data ())
+  | None ->
+      encrypted_data
+  | Some where ->
+      let () =
+        Out_channel.with_open_bin where (fun channel ->
+            output_string channel encrypted_data
+        )
+      in
+      encrypted_data
 
-let decrypt ~key ~iv data () = 
+let encrypt_file ?(where = None) ~key ~iv file () =
+  match open_in_bin file with
+  | exception exn ->
+      Error exn
+  | file ->
+      let raw_data = Util.Io.read_file file () in
+      let () = close_in file in
+      Ok (encrypt ~where ~key ~iv raw_data ())
+
+let decrypt ~key ~iv data () =
   let d = Cryptokit.AEAD.(aes_gcm key ~iv Decrypt) in
   let decrypted_data = Cryptokit.auth_check_transform_string d data in
   decrypted_data
 
-let decrpty_file ~key ~iv file () = 
+let decrpty_file ~key ~iv file () =
   match open_in_bin file with
-  | exception exn -> Error exn
-  | file -> 
-    let raw_data = Util.Io.read_file file () in
-    let () = close_in file in
-    Ok (decrypt ~key ~iv raw_data ())
-
+  | exception exn ->
+      Error exn
+  | file ->
+      let raw_data = Util.Io.read_file file () in
+      let () = close_in file in
+      Ok (decrypt ~key ~iv raw_data ())
