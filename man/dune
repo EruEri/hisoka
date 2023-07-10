@@ -15,8 +15,69 @@
 ;*                                                                                            *;
 ;**********************************************************************************************;
 
-(library
- (name hisoka)
- (libraries cryptokit yojson ppx_deriving_yojson.runtime cmdliner cbindings xdg)
- (preprocess (pps ppx_deriving_yojson))
- )
+
+(rule
+ (with-stdout-to
+  hisoka.1
+  (run %{bin:hisoka} --help=groff)))
+
+(install
+ (section man)
+ (files hisoka.1))
+
+
+(rule
+ (with-stdout-to
+  hisoka-add.1
+  (run %{bin:hisoka} add --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-add.1))
+
+
+(rule
+ (with-stdout-to
+  hisoka-decrypt.1
+  (run %{bin:hisoka} decrypt --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-decrypt.1))
+
+
+(rule
+ (with-stdout-to
+  hisoka-delete.1
+  (run %{bin:hisoka} delete --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-delete.1))
+
+(rule
+ (with-stdout-to
+  hisoka-display.1
+  (run %{bin:hisoka} display --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-display.1))
+
+(rule
+ (with-stdout-to
+  hisoka-init.1
+  (run %{bin:hisoka} init --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-init.1))
+
+(rule
+ (with-stdout-to
+  hisoka-list.1
+  (run %{bin:hisoka} list --help=groff)))
+
+(install
+ (section man)
+ (files hisoka-list.1))

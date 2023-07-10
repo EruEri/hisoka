@@ -264,7 +264,7 @@ module List_Cmd = struct
       in
       let () = items_list |> List.iter (fun info -> 
         let open Items.Info in
-        Printf.printf "name : %s, group : [%s], extension : %s\n" info.name (String.concat ", " info.groups) info.extension 
+        Printf.printf "name : %s, group : [%s]\n" info.name (String.concat ", " info.groups) 
       )  in
       ()
 

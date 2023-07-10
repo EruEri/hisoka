@@ -20,14 +20,12 @@ module Info = struct
   type info = {
     groups: string list;
     name: string;
-    extension: string
   }[@@deriving yojson]
 
-  let create ~groups ~extension name = 
+  let create ~groups name = 
     {
       groups;
       name;
-      extension
     }
 end
 
@@ -40,11 +38,11 @@ module External = struct
 
   let compare lhs rhs = compare lhs.info rhs.info
 
-  let create ?iv ~groups ~name ~extension encrypted_file_name = 
+  let create ?iv ~groups ~name encrypted_file_name = 
     let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in 
     {
       iv;
-      info = Info.create ~groups ~extension name;
+      info = Info.create ~groups name;
       encrypted_file_name
     }
 

@@ -232,7 +232,7 @@ module Manager = struct
     in 
 
     let external_items, to_encrypted_data = good_files |> List.map (fun (encrypted_name, commit) -> 
-      let item = Items.External.create ~groups:commit.groups ~name:commit.name ~extension:commit.extension encrypted_name in
+      let item = Items.External.create ~groups:commit.groups ~name:commit.name encrypted_name in
       item, (encrypted_name, item.iv, commit.plain_data)
     ) |> List.split in
     

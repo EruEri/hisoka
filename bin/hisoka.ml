@@ -16,6 +16,6 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let code = Hisoka.Cli.Hisoka_Cmd.eval ()
+let code = Libhisoka.Cli.Hisoka_Cmd.eval ()
 
 let _ = exit code

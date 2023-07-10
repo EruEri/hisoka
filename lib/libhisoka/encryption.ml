@@ -30,7 +30,7 @@ let random_iv () = String.init iv_size (fun _ -> uint_8_max |> Random.full_int |
 
 let encrypt ?(where = None) ~key ~iv data () = 
   let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
-  let encrypted_data = Cryptokit.auth_transform_string e (data) in
+  let encrypted_data = Cryptokit.auth_transform_string e data in
   match where with
   | None -> encrypted_data
   | Some where -> 
