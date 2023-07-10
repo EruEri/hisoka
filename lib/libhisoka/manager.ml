@@ -111,7 +111,7 @@ module External_Manager = struct
     let open Items.External in
     let external_items, deleted = manager.external_items |> List.partition_map (fun eitem -> 
       match groups with
-      | [] -> Either.left eitem
+      | [] -> Either.right eitem.info
       | groups -> 
         let egroups = StringSet.of_list eitem.info.groups in
         let filter_groups = StringSet.of_list groups in

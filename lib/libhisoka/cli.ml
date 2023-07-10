@@ -169,6 +169,21 @@ module Add_Cmd = struct
     let cmd_man = [
       `S Manpage.s_description;
       `P "Add files to hisoka";
+      `S Manpage.s_examples;
+      `I (
+        "Add the file $(b,file.txt) in an existing group $(b,g1)", 
+        "$(iname) -e g1 file.txt"
+      );
+
+      `I (
+        "Add files $(b,file1.txt), $(b,file2.txt) in groups $(b,g1) and $(b,g2)",
+        "$(iname) -g g1 -g g2 file1.txt file2.txt"
+      );
+
+      `I (
+        "Add files $(b,file1.txt), $(b,file2.txt) in grou $(b,g1) and existing group $(b,e1)",
+        "$(iname) -g g1 -e e1 file1.txt file2.txt"
+      );
     ]
 
     let cmd run =
@@ -230,10 +245,30 @@ module List_Cmd = struct
       $ Common.groups_term ~docv:"FILES" ~doc:"Files to list"
     )
 
-    let cmd_doc = "Display the list of encrypted files"
+    let cmd_doc = "List of encrypted files"
     let cmd_man = [
       `S Manpage.s_description;
-      `P "Display the list of encrypted files";
+      `P "List of encrypted files";
+      `S Manpage.s_examples;
+      `I (
+        "List the file $(b,file.txt)", 
+        "$(iname) file.txt"
+      );
+
+      `I (
+        "List all files", 
+        "$(iname)"
+      );
+
+      `I (
+        "List all files which are in the groups $(b,g1) and $(b,g2)", 
+        "$(iname) -s all -g g1 -g g2"
+      );
+
+      `I (
+        "List all files which are in the groups $(b,g1) or $(b,g2)", 
+        "$(iname) -s any -g g1 -g g2"
+      );
     ]
 
     let cmd run =
@@ -319,6 +354,27 @@ module Decrypt_Cmd = struct
     let cmd_man = [
       `S Manpage.s_description;
       `P "Decrypt encrypted files";
+      `S Manpage.s_examples;
+      `I (
+        "Decrypt the file $(b,file.txt)", 
+        "$(iname) file.txt"
+      );
+
+      `I (
+        "Decrypt all files", 
+        "$(iname)"
+      );
+
+      `I (
+        "Decrypt all files which are in the groups $(b,g1) and $(b,g2)", 
+        "$(iname) -s all -g g1 -g g2"
+      );
+
+      `I (
+        "Decrypt all files which are in the groups $(b,g1) or $(b,g2)", 
+        "$(iname) -s any -g g1 -g g2"
+      );
+
     ]
 
     let cmd run =
@@ -380,6 +436,26 @@ module Delete_Cmd = struct
     let cmd_man = [
       `S Manpage.s_description;
       `P "Delete files";
+      `S Manpage.s_examples;
+      `I (
+        "Delete the file $(b,file.txt)", 
+        "$(iname) file.txt"
+      );
+
+      `I (
+        "Delete all files", 
+        "$(iname)"
+      );
+
+      `I (
+        "Delete all files which are in the groups $(b,g1) and $(b,g2)", 
+        "$(iname) -s all -g g1 -g g2"
+      );
+
+      `I (
+        "Delete all files which are in the groups $(b,g1) or $(b,g2)", 
+        "$(iname) -s any -g g1 -g g2"
+      );
     ]
 
     let cmd run =
