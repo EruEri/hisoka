@@ -25,7 +25,7 @@ let aes_string_encrypt s () =
 
 let default_iv = String.init iv_size (fun _ -> Char.chr 0)
 
-let random_iv = String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr )
+let random_iv () = String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr )
 
 
 let encrypt ?(where = None) ~key ~iv data () = 

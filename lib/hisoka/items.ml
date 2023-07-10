@@ -41,7 +41,7 @@ module External = struct
   let compare lhs rhs = compare lhs.info rhs.info
 
   let create ?iv ~groups ~name ~extension encrypted_file_name = 
-    let iv = match iv with Some iv -> iv | None -> Encryption.random_iv in
+    let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in 
     {
       iv;
       info = Info.create ~groups ~extension name;
