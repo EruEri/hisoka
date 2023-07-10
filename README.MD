@@ -23,11 +23,9 @@ OPTIONS
        -f, --force
            force the initialisation
 ```
-This command will initialize ```hisoka``` by creating a ```.hisoka``` folder in your **HOME** directory.
+This command will initialize ```hisoka``` by creating an ```hisoka``` folder in your **$XDG_DATA_HOME** or **$HOME/.local/share** directory.
 All the encrypted files will be stored here.
 
-#### **Warning**
-The global varible ```$HOME``` must be set.
 
 ### - **Add**
 To add a file, use the ```add``` subcommand
