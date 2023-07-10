@@ -519,7 +519,7 @@ module Display_Cmd = struct
     files : string list;
   }
 
-  let pixel_modes =
+  let pixel_format =
     [
       ("iterm", Cbindings.Display.Iterm);
       ("kitty", Cbindings.Display.Kitty);
@@ -536,14 +536,14 @@ module Display_Cmd = struct
     Arg.(
       required
       & opt ~vopt:(Some Cbindings.Display.NONE)
-          (some & enum pixel_modes)
+          (some & enum pixel_format)
           (Some Cbindings.Display.NONE)
-      & info ~docv:"Pixel Mode"
+      & info ~docv:"Pixel Format"
           ~doc:
             ("Specify the pixel mode to use to render the image. "
-            ^ doc_alts_enum ~quoted:true pixel_modes
+            ^ doc_alts_enum ~quoted:true pixel_format
             )
-          [ "m"; "mode" ]
+          [ "f"; "format" ]
     )
 
   let cmd_term run =
