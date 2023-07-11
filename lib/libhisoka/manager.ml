@@ -98,13 +98,13 @@ module External_Manager = struct
                  if not is_matched then
                    Either.left eitem
                  else
-                   Either.right eitem.info
+                   Either.right eitem
              | groups -> (
                  let egroups = StringSet.of_list eitem.info.groups in
                  let filter_groups = StringSet.of_list groups in
                  match fstrategy filter_groups egroups && is_matched with
                  | true ->
-                     Either.right eitem.info
+                     Either.right eitem
                  | false ->
                      Either.left eitem
                )
@@ -123,12 +123,12 @@ module External_Manager = struct
       |> List.partition_map (fun eitem ->
              match groups with
              | [] ->
-                 Either.right eitem.info
+                 Either.right eitem
              | groups ->
                  let egroups = StringSet.of_list eitem.info.groups in
                  let filter_groups = StringSet.of_list groups in
                  if fstrategy filter_groups egroups then
-                   Either.right eitem.info
+                   Either.right eitem
                  else
                    Either.left eitem
          )

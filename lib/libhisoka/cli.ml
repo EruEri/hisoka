@@ -66,8 +66,8 @@ module Init_Cmd = struct
     Cmd.v info (cmd_term run)
 
   let run cmd_init =
-    let open App.App in
     let open App.AppLocation in
+    let open Util.FileSys in
     let force = cmd_init.force in
     let ( >>= ) = Result.bind in
     let app_path = PathBuf.to_string hisoka_dir in
@@ -485,7 +485,7 @@ module Delete_Cmd = struct
         let string_of_files =
           let open Items.Info in
           deleted_files_info
-          |> List.map (fun { name; _ } -> name)
+          |> List.map (fun item -> item.Items.External.info.name)
           |> String.concat ", "
         in
         let deleting_file_format =
@@ -498,6 +498,17 @@ module Delete_Cmd = struct
             ()
         in
         if confirmed_deletion then
+          let () =
+            deleted_files_info
+            |> List.iter (fun file_info ->
+                   let pathbuf =
+                     PathBuf.push file_info.Items.External.encrypted_file_name
+                       App.AppLocation.hisoka_data_dir
+                   in
+                   let path = PathBuf.to_string pathbuf in
+                   Util.FileSys.rmrf path ()
+               )
+          in
           let () =
             Manager.Manager.encrypt ~max_iter:3 ~raise_on_conflicts:true
               ~key:encrypted_key filtered_manager ()
@@ -652,7 +663,10 @@ module Hisoka_Cmd = struct
     ()
 
   let root_man =
-    [ `S Manpage.s_description; `P "hisoka allows you to encrypt any file" ]
+    [
+      `S Manpage.s_description;
+      `P "hisoka allows you to store any files by encrypting them";
+    ]
 
   let root_info = Cmd.info "hisoka" ~doc:root_doc ~man:root_man ~version
 
@@ -663,7 +677,7 @@ module Hisoka_Cmd = struct
       List_Cmd.command;
       Decrypt_Cmd.command;
       Delete_Cmd.command;
-      Chafa_Test.command;
+      (* Chafa_Test.command; *)
       Display_Cmd.command;
     ]
 
