@@ -15,5 +15,5 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let code = Libhisoka.Cli.Hisoka_Cmd.eval ()
+let code = Commandline.eval ()
 let _ = exit code

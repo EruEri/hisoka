@@ -53,13 +53,11 @@ let root_info = Cmd.info "hisoka" ~doc:root_doc ~man:root_man ~version
 
 let subcommands =
   [
-    Init_Cmd.command;
-    Add_Cmd.command;
-    List_Cmd.command;
-    Decrypt_Cmd.command;
-    Delete_Cmd.command;
-    (* Chafa_Test.command; *)
-    Display_Cmd.command;
+    Cinit.command;
+    Cadd.command;
+    Clist.command;
+    Cdecrypt.command;
+    Cdelete.command;
   ]
 
 let parse () = Cmd.group ~default:(cmd_term run_base) root_info subcommands

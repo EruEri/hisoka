@@ -135,7 +135,7 @@ module External_Manager = struct
     ({ external_items }, deleted)
 
   let decrypt ~key () =
-    let path = PathBuf.to_string App.AppLocation.hisoka_extern_config_file in
+    let path = Util.Path.to_string App.AppLocation.hisoka_extern_config_file in
     match Encryption.decrpty_file ~key ~iv:encryption_iv path () with
     | Error exn ->
         raise exn
@@ -178,8 +178,8 @@ module Manager = struct
     |> List.filter_map (fun ei ->
            let open Items.External in
            let input_files_data =
-             PathBuf.to_string
-             @@ PathBuf.push ei.encrypted_file_name
+             Util.Path.to_string
+             @@ Util.Path.push ei.encrypted_file_name
                   App.AppLocation.hisoka_data_dir
            in
            let data =
@@ -210,7 +210,7 @@ module Manager = struct
 
   let add_item_from_file ~groups ~name ~extension ~file_name manager =
     let file = In_channel.(open_gen [ Open_rdonly; Open_binary ] 0 file_name) in
-    let content = Util.Io.read_file file () in
+    let content = Util.Io.read_file file in
     let () = In_channel.close file in
     if content = String.empty then
       manager
@@ -246,8 +246,8 @@ module Manager = struct
                Filename.concat dir_path external_item.info.name
              in
              let input_files_data =
-               PathBuf.to_string
-               @@ PathBuf.push external_item.encrypted_file_name
+               Util.Path.to_string
+               @@ Util.Path.push external_item.encrypted_file_name
                     App.AppLocation.hisoka_data_dir
              in
              let data =
@@ -271,14 +271,13 @@ module Manager = struct
   let is_empty manager = manager.external_manager.external_items = []
 
   let encrypt ~max_iter ~raise_on_conflicts ~key manager () =
-    let pathbuf = App.AppLocation.hisoka_data_dir in
+    let path = App.AppLocation.hisoka_data_dir in
     let good_files, commit_conficts =
       manager.register_external_change
       |> List.partition_map (fun commit ->
              let file_name =
                Util.Hash.generate_unique_name ~max_iter
-                 ~extension:commit.extension ~name:commit.name pathbuf
-             in
+                 ~extension:commit.extension ~name:commit.name path in
              match file_name with
              | Some s ->
                  Either.left (s, commit) (* md5 filename, groupe, plaindata*)
@@ -313,8 +312,8 @@ module Manager = struct
       |> List.iter (fun (encrypted_name, iv, plain_data) ->
              let where =
                App.AppLocation.hisoka_data_dir
-               |> PathBuf.push encrypted_name
-               |> PathBuf.to_string |> Option.some
+               |> Util.Path.push encrypted_name
+               |> Util.Path.to_string |> Option.some
              in
              let _ = Encryption.encrypt ~where ~key ~iv plain_data () in
              ()

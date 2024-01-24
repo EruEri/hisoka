@@ -134,10 +134,10 @@ let run delete_cmd =
           deleted_files_info
           |> List.iter (fun file_info ->
                  let pathbuf =
-                   PathBuf.push file_info.Items.External.encrypted_file_name
+                   Path.push file_info.Items.External.encrypted_file_name
                      App.AppLocation.hisoka_data_dir
                  in
-                 let path = PathBuf.to_string pathbuf in
+                 let path = Path.to_string pathbuf in
                  Util.FileSys.rmrf path ()
              )
         in

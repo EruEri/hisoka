@@ -16,7 +16,6 @@
 (**********************************************************************************************)
 
 open Cmdliner
-open Libhisoka
 open Util
 
 let file_term ~docv ~doc =

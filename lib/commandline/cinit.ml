@@ -43,7 +43,7 @@ let run cmd_init =
   let open Util.FileSys in
   let force = cmd_init.force in
   let ( >>= ) = Result.bind in
-  let app_path = PathBuf.to_string hisoka_dir in
+  let app_path = Util.Path.to_string hisoka_dir in
   let is_app_folder_exist = Sys.file_exists app_path in
   let res =
     if is_app_folder_exist && not force then
@@ -66,7 +66,7 @@ let run cmd_init =
       in
       create_folder ~on_error:(Error.Create_folder hisoka_dir) hisoka_dir
       >>= fun app_dir ->
-      let external_file_path = PathBuf.push hisoka_rc app_dir in
+      let external_file_path = Util.Path.push hisoka_rc app_dir in
       let external_manager = Manager.External_Manager.create in
       let data =
         Manager.External_Manager.encrypt ~key:encrypted_key external_manager
@@ -76,8 +76,8 @@ let run cmd_init =
         ~on_file:(fun oc -> output_string oc data)
         ~on_error:(Error.Create_file external_file_path) external_file_path
       >>= fun external_file_path ->
-      let app_dir = PathBuf.pop external_file_path in
-      let data_foler_dir = PathBuf.push data_folder app_dir in
+      let app_dir = Util.Path.pop external_file_path in
+      let data_foler_dir = Util.Path.push data_folder app_dir in
       create_folder ~on_error:(Error.Create_folder data_foler_dir)
         data_foler_dir
   in

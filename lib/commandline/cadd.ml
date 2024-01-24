@@ -77,10 +77,10 @@ let cmd run =
   Cmd.v info (cmd_term run)
 
 let run cmd_add =
-  let module StringSet = Util.StringSet in
+  let module StringSet = Set.Make(String) in
   let { groups; existing_groups; files } = cmd_add in
   let encrypted_key =
-    Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
+    Libhisoka.Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
   in
   let manager = Manager.Manager.decrypt ~key:encrypted_key () in
 
