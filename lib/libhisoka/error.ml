@@ -15,11 +15,13 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
+open Util
+
 type init_error =
   | App_folder_already_exist
-  | Create_folder of PathBuf.pathbuf
-  | Create_file of PathBuf.pathbuf
-  | EncryptionError of PathBuf.pathbuf
+  | Create_folder of Path.t
+  | Create_file of Path.t
+  | EncryptionError of Path.t
 
 type error =
   | No_Option_choosen
@@ -35,11 +37,11 @@ let string_of_init_error = function
   | App_folder_already_exist ->
       "\".hisoka\" directory already exists"
   | Create_folder path ->
-      Printf.sprintf "Unable to create directory : %s" (PathBuf.to_string path)
+      Printf.sprintf "Unable to create directory : %s" (Path.to_string path)
   | Create_file path ->
-      Printf.sprintf "Unable to create file : %s" (PathBuf.to_string path)
+      Printf.sprintf "Unable to create file : %s" (Path.to_string path)
   | EncryptionError path ->
-      Printf.sprintf "Unable to encrypt file : %s" (PathBuf.to_string path)
+      Printf.sprintf "Unable to encrypt file : %s" (Path.to_string path)
 
 let string_of_error = function
   | Hisoka_Not_Initialized ->

@@ -1,0 +1,4 @@
+(library
+ (name commandline)
+ (libraries libhisoka cmdliner util))
+

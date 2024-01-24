@@ -15,5 +15,9 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module App = App
-module Manager = Manager
+module Path = Path
+module Strategy = Strategy
+module Hash = Hash
+module Format = Format
+module Io = Io
+module FileSys = FileSys

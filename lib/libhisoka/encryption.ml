@@ -47,7 +47,7 @@ let encrypt_file ?(where = None) ~key ~iv file () =
   | exception exn ->
       Error exn
   | file ->
-      let raw_data = Util.Io.read_file file () in
+      let raw_data = Util.Io.read_file file in
       let () = close_in file in
       Ok (encrypt ~where ~key ~iv raw_data ())
 
@@ -61,6 +61,6 @@ let decrpty_file ~key ~iv file () =
   | exception exn ->
       Error exn
   | file ->
-      let raw_data = Util.Io.read_file file () in
+      let raw_data = Util.Io.read_file file in
       let () = close_in file in
       Ok (decrypt ~key ~iv raw_data ())

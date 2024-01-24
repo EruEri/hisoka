@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,13 +15,31 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-type pathbuf = string list
+let create_folder ?(perm = 0o700) ~on_error folder =
+  let to_path_string = Path.to_string folder in
+  match Sys.mkdir to_path_string perm with
+  | exception _ ->
+      Error on_error
+  | () ->
+      Ok folder
 
-let pop : pathbuf -> pathbuf = List.tl
-let push : string -> pathbuf -> pathbuf = List.cons
-let to_string pathbuf = pathbuf |> List.rev |> String.concat Filename.dir_sep
-let create name : pathbuf = [ name ]
-let from_list l = l |> List.rev
+let create_file ?(on_file = fun _ -> ()) ~on_error file =
+  let to_file_path = Path.to_string file in
+  match Out_channel.open_bin to_file_path with
+  | exception _ ->
+      Error on_error
+  | outchan ->
+      let () = on_file outchan in
+      let () = close_out outchan in
+      Ok file
 
-let exists_in ~file ~pathbuf =
-  Sys.file_exists (pathbuf |> push file |> to_string)
+let rec rmrf path () =
+  match Sys.is_directory path with
+  | true ->
+      Sys.readdir path
+      |> Array.iter (fun name -> rmrf (Filename.concat path name) ());
+      Unix.rmdir path
+  | false ->
+      Sys.remove path
+  | exception e ->
+      raise e

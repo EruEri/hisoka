@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,5 +15,52 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module App = App
-module Manager = Manager
+
+open Cmdliner
+
+let version =
+  match Build_info.V1.version () with
+  | None ->
+      "n/a"
+  | Some v ->
+      Build_info.V1.Version.to_string v
+
+let root_doc = "the encrypted-file manager"
+
+type t = bool
+
+let change_term =
+  Arg.(
+    value & flag
+    & info [ "change-master-password" ] ~doc:"Change the master password"
+  )
+
+let cmd_term run =
+  let combine change = run @@ change in
+  Term.(const combine $ change_term)
+
+let run_base change_password =
+  ignore change_password;
+  ()
+
+let root_man =
+  [
+    `S Manpage.s_description;
+    `P "hisoka allows you to store any files by encrypting them";
+  ]
+
+let root_info = Cmd.info "hisoka" ~doc:root_doc ~man:root_man ~version
+
+let subcommands =
+  [
+    Init_Cmd.command;
+    Add_Cmd.command;
+    List_Cmd.command;
+    Decrypt_Cmd.command;
+    Delete_Cmd.command;
+    (* Chafa_Test.command; *)
+    Display_Cmd.command;
+  ]
+
+let parse () = Cmd.group ~default:(cmd_term run_base) root_info subcommands
+let eval () = () |> parse |> Cmd.eval

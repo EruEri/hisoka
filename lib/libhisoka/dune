@@ -24,6 +24,8 @@
   cmdliner
   cbindings
   xdg
-  dune-build-info)
+  dune-build-info
+  util
+  )
  (preprocess
   (pps ppx_deriving_yojson)))

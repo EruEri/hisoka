@@ -24,16 +24,16 @@ module AppLocation = struct
   let app_folder = ".hisoka"
   let data_folder = ".data"
   let hisoka_rc = ".hisokarc"
-  let hisoka_dir = PathBuf.from_list [ hisoka_dir ]
-  let hisoka_extern_config_file = PathBuf.push hisoka_rc hisoka_dir
-  let hisoka_data_dir = PathBuf.push data_folder hisoka_dir
+  let hisoka_dir = Util.Path.from_list [ hisoka_dir ]
+  let hisoka_extern_config_file = Util.Path.push hisoka_rc hisoka_dir
+  let hisoka_data_dir = Util.Path.push data_folder hisoka_dir
 end
 
 module App = struct
   let is_app_folder_exist =
     let open AppLocation in
-    let app_path = hisoka_dir |> PathBuf.to_string in
-    app_path |> Sys.file_exists
+    let app_path = Util.Path.to_string hisoka_dir in
+    Sys.file_exists app_path
 
   let check_app_initialized () =
     let () =

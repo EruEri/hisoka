@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,5 +15,16 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module App = App
-module Manager = Manager
+module StringSet = Set.Make(String)
+
+type strategy_group = Any | All | Exact
+
+let strategy_group_enum = [ ("any", Any); ("all", All); ("exact", Exact) ]
+
+let fstrategy = function
+  | Any ->
+      fun lhs rhs -> not @@ StringSet.disjoint lhs rhs
+  | All ->
+      StringSet.subset
+  | Exact ->
+      StringSet.equal

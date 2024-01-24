@@ -15,7 +15,7 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module StringSet = Util.StringSet
+module StringSet = Util.Strategy.StringSet
 
 module External_Manager = struct
   let encryption_iv =
@@ -53,8 +53,7 @@ module External_Manager = struct
   let encrypt ~key external_manager () =
     let data = to_string external_manager in
     let where =
-      App.AppLocation.hisoka_extern_config_file |> PathBuf.to_string
-      |> Option.some
+      Option.some @@ Util.Path.to_string App.AppLocation.hisoka_extern_config_file
     in
     Encryption.encrypt ~where ~key ~iv:encryption_iv data ()
 
