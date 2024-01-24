@@ -101,6 +101,6 @@ let run decrypt_cmd =
       in
       ()
   | true ->
-      raise Error.(HisokaError No_file_to_decrypt)
+      raise Error.(HisokaError NoFileToDecrypt)
 
 let command = cmd run

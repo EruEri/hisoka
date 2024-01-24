@@ -27,7 +27,7 @@ module External_Manager = struct
 
   (**
     @return : The manager extended with the items
-    @raise Hisoka_Error.Already_Existing_name if the id is already in the manager
+    @raise Hisoka_Error.AlreadyExistingName if the id is already in the manager
 *)
   let append item manager =
     match
@@ -38,7 +38,7 @@ module External_Manager = struct
     | None ->
         { external_items = item :: manager.external_items }
     | Some _ ->
-        raise (Error.HisokaError (Error.Already_Existing_name item.info.name))
+        raise (Error.HisokaError (Error.AlreadyExistingName item.info.name))
 
   let append_list items manager =
     items |> List.fold_left (fun acc elt -> append elt acc) manager
@@ -166,11 +166,10 @@ module Manager = struct
 
   exception Existing_Files of commit list
 
-  let list_info manager =
-    manager.external_manager.external_items |> List.map (fun ei -> ei.Item.info)
+  let infos manager = List.map Item.info manager.external_manager.external_items
 
   (**
-      @raise HisokaError.Missing_file if a file which was external encrypted is missing
+      @raise HisokaError.MissingFile if a file which was external encrypted is missing
   *)
   let list_name_data ~strategy ~key ~groups manager =
     manager.external_manager.external_items
@@ -234,7 +233,7 @@ module Manager = struct
 
   (**
     @return Decrypt all the files encrypted in the manager:
-    @raise HisokaError.Missing_file if a file which was external encrypted is missing
+    @raise HisokaError.MissingFile if a file which was external encrypted is missing
   *)
   let decrypt_files ~dir_path ~key manager () =
     let () =

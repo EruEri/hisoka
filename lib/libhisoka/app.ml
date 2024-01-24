@@ -37,7 +37,7 @@ module App = struct
   let check_app_initialized () =
     let () =
       if not is_app_folder_exist then
-        raise Error.(HisokaError Hisoka_Not_Initialized)
+        raise Error.(HisokaError HisokaNotInitialized)
     in
     ()
 end

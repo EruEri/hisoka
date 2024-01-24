@@ -28,3 +28,5 @@ let to_string item = item |> to_yojson |> Yojson.Safe.to_string
 
 let of_string bytes =
   bytes |> Yojson.Safe.from_string |> of_yojson |> Result.get_ok
+
+let info item = item.info

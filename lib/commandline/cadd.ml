@@ -93,7 +93,7 @@ let run cmd_add =
         ()
     | false ->
         raise
-        @@ Error.(hisoka_error @@ Non_existing_group (StringSet.elements diff))
+        @@ Error.(hisoka_error @@ NoneExistingGroup (StringSet.elements diff))
   in
 
   let groups =

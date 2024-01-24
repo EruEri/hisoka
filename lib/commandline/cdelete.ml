@@ -98,7 +98,7 @@ let run delete_cmd =
           ~case_insensible:true ~yes:'y' ~no:'n' ~prompt ()
       in
       if not continue then
-        raise Error.(HisokaError No_Option_choosen)
+        raise Error.(hisoka_error NoOptionChoosen)
   in
   let encrypted_key =
     Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
@@ -143,6 +143,6 @@ let run delete_cmd =
         in
         Printf.printf "Deleted : %s\n" string_of_files
       else
-        raise Error.(HisokaError No_Option_choosen)
+        raise Error.(hisoka_error NoOptionChoosen)
 
 let command = cmd run

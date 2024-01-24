@@ -17,50 +17,43 @@
 
 open Util
 
-type init_error =
-  | App_folder_already_exist
-  | Create_folder of Path.t
-  | Create_file of Path.t
-  | EncryptionError of Path.t
-
 type error =
-  | No_Option_choosen
-  | No_file_to_decrypt
-  | Hisoka_Not_Initialized
+  | NoOptionChoosen
+  | NoFileToDecrypt
+  | HisokaNotInitialized
   | DecryptionError of string
-  | Already_Existing_name of string
-  | Missing_file of { true_name : string; encrypted_name : string }
-  | Init_Error of init_error
-  | Non_existing_group of string list
-
-let string_of_init_error = function
-  | App_folder_already_exist ->
-      "\".hisoka\" directory already exists"
-  | Create_folder path ->
-      Printf.sprintf "Unable to create directory : %s" (Path.to_string path)
-  | Create_file path ->
-      Printf.sprintf "Unable to create file : %s" (Path.to_string path)
-  | EncryptionError path ->
-      Printf.sprintf "Unable to encrypt file : %s" (Path.to_string path)
+  | AlreadyExistingName of string
+  | MissingFile of { true_name : string; encrypted_name : string }
+  | HisokaFolderAlreadyExist
+  | CreateFolderError of Path.t
+  | CreateFileError of Path.t
+  | EncryptionError of Path.t
+  | NoneExistingGroup of string list
 
 let string_of_error = function
-  | Hisoka_Not_Initialized ->
+  | HisokaNotInitialized ->
       Printf.sprintf
         "\".hisoka\" directory doesn't exist. Use hisoka init to initialize"
-  | No_Option_choosen ->
+  | NoOptionChoosen ->
       "Operation Aborted"
-  | No_file_to_decrypt ->
+  | NoFileToDecrypt ->
       Printf.sprintf "No File to decrypt"
   | DecryptionError file ->
       Printf.sprintf "decrptytion error : %s" file
-  | Already_Existing_name filename ->
+  | AlreadyExistingName filename ->
       Printf.sprintf "Filename : \"%s\" is already in hisoka" filename
-  | Missing_file { true_name; encrypted_name } ->
+  | MissingFile { true_name; encrypted_name } ->
       Printf.sprintf "Filename: \"%s\" is missing: This file encrypted: \"%s\""
         encrypted_name true_name
-  | Init_Error init ->
-      string_of_init_error init
-  | Non_existing_group groups ->
+  | HisokaFolderAlreadyExist ->
+      "\".hisoka\" directory already exists"
+  | CreateFolderError path ->
+      Printf.sprintf "Unable to create directory : %s" (Path.to_string path)
+  | CreateFileError path ->
+      Printf.sprintf "Unable to create file : %s" (Path.to_string path)
+  | EncryptionError path ->
+      Printf.sprintf "Unable to encrypt file : %s" (Path.to_string path)
+  | NoneExistingGroup groups ->
       let s, does =
         match groups with [] | _ :: [] -> ("", "doesn't") | _ -> ("s", "don't")
       in
