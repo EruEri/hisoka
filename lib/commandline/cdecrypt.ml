@@ -18,7 +18,6 @@
 open Cmdliner
 open Libhisoka
 open Util
-
 module StringSet = Util.Strategy.StringSet
 
 let name = "decrypt"

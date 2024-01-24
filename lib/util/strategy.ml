@@ -15,7 +15,7 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module StringSet = Set.Make(String)
+module StringSet = Set.Make (String)
 
 type strategy_group = Any | All | Exact
 

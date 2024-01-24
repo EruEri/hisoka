@@ -21,7 +21,6 @@ module AppLocation = struct
   let xdg = Xdg.create ~env:Sys.getenv_opt ()
   let xdg_data = Xdg.data_dir xdg
   let hisoka_dir = xdg_data // hisoka
-  let app_folder = ".hisoka"
   let data_folder = ".data"
   let hisoka_rc = ".hisokarc"
   let hisoka_dir = Util.Path.from_list [ hisoka_dir ]

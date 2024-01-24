@@ -17,7 +17,6 @@
 
 open Cmdliner
 open Libhisoka
-
 module StringSet = Util.Strategy.StringSet
 
 let name = "add"
@@ -61,13 +60,12 @@ let cmd_man =
         "$(iname) -e g1 file.txt"
       );
     `I
-      ( "Add files $(b,file1.txt), $(b,file2.txt) in groups $(b,g1) and \
-         $(b,g2)",
+      ( "Add files $(b,file1.txt), $(b,file2.txt) in groups $(b,g1) and $(b,g2)",
         "$(iname) -g g1 -g g2 file1.txt file2.txt"
       );
     `I
-      ( "Add files $(b,file1.txt), $(b,file2.txt) in grou $(b,g1) and \
-         existing group $(b,e1)",
+      ( "Add files $(b,file1.txt), $(b,file2.txt) in grou $(b,g1) and existing \
+         group $(b,e1)",
         "$(iname) -g g1 -e e1 file1.txt file2.txt"
       );
   ]
@@ -77,10 +75,11 @@ let cmd run =
   Cmd.v info (cmd_term run)
 
 let run cmd_add =
-  let module StringSet = Set.Make(String) in
+  let module StringSet = Set.Make (String) in
   let { groups; existing_groups; files } = cmd_add in
   let encrypted_key =
-    Libhisoka.Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
+    Libhisoka.Input.ask_password_encrypted
+      ~prompt:"Enter the master password : " ()
   in
   let manager = Manager.Manager.decrypt ~key:encrypted_key () in
 

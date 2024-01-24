@@ -22,6 +22,4 @@ let push : string -> t -> t = List.cons
 let to_string t = t |> List.rev |> String.concat Filename.dir_sep
 let create name : t = [ name ]
 let from_list l = l |> List.rev
-
-let exists ~file t =
-  Sys.file_exists (t |> push file |> to_string)
+let exists ~file t = Sys.file_exists (t |> push file |> to_string)

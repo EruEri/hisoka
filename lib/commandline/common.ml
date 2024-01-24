@@ -35,9 +35,9 @@ let stragtegy_group_term =
         ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
         ~doc:
           "the filter strategy to apply. \"any\" matches if at least one of \
-           the given groups belongs to the group of the file. \"all\" \
-           matches if all the given groups belongs to the group of the \
-           file.  \"exact\" matches if exactly all the given groups are the \
-           same groups as the file"
+           the given groups belongs to the group of the file. \"all\" matches \
+           if all the given groups belongs to the group of the file.  \
+           \"exact\" matches if exactly all the given groups are the same \
+           groups as the file"
         [ "s"; "strategy" ]
   )

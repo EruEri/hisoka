@@ -21,12 +21,8 @@
  (name cbindings)
  (foreign_stubs
   (language c)
-  (names input )
-  (flags
-   (-fPIC)
-   (-std=c99)
-   ))
-)
+  (names input)
+  (flags (-fPIC) (-std=c99))))
 
 ; (rule
 ;  (targets

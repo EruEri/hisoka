@@ -71,7 +71,7 @@ let run cmd_list =
         let filter_groups = StringSet.of_list groups in
         items_list
         |> List.filter (fun item ->
-               let open Items.Info in
+               let open Info in
                let igroups = StringSet.of_list item.groups in
                Strategy.fstrategy strategy filter_groups igroups
            )
@@ -79,7 +79,7 @@ let run cmd_list =
   let () =
     items_list
     |> List.iter (fun info ->
-           let open Items.Info in
+           let open Info in
            Printf.printf "name : %s, group : [%s]\n" info.name
              (String.concat ", " info.groups)
        )

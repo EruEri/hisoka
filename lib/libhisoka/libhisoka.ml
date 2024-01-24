@@ -19,4 +19,5 @@ module App = App
 module Manager = Manager
 module Input = Input
 module Error = Error
-module Items = Items
+module Item = Item
+module Info = Info

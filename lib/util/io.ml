@@ -15,4 +15,4 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let read_file ch  = really_input_string ch (in_channel_length ch)
+let read_file ch = really_input_string ch (in_channel_length ch)

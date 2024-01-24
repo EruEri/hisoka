@@ -25,7 +25,6 @@
   cbindings
   xdg
   dune-build-info
-  util
-  )
+  util)
  (preprocess
   (pps ppx_deriving_yojson)))

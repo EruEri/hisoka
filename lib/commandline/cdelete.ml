@@ -18,7 +18,6 @@
 open Cmdliner
 open Libhisoka
 open Util
-
 module StringSet = Util.Strategy.StringSet
 
 let name = "delete"
@@ -32,9 +31,7 @@ type cmd_delete = {
 type t = cmd_delete
 
 let files_term =
-  Arg.(
-    value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete"
-  )
+  Arg.(value & pos_all string [] & info [] ~docv:"FILES" ~doc:"Files to delete")
 
 let cmd_term run =
   let combine groups strategy files = run @@ { groups; strategy; files } in
@@ -84,8 +81,8 @@ let run delete_cmd =
           string_groups s
     | Any ->
         Printf.sprintf
-          "Are you sure about deleting all files contains at least one of \
-           the follwing group%s: [%s]"
+          "Are you sure about deleting all files contains at least one of the \
+           follwing group%s: [%s]"
           s string_groups
     | Exact ->
         Printf.sprintf
@@ -115,9 +112,9 @@ let run delete_cmd =
       print_endline "No files to delete"
   | deleted_files_info ->
       let string_of_files =
-        let open Items.Info in
+        let open Info in
         deleted_files_info
-        |> List.map (fun item -> item.Items.External.info.name)
+        |> List.map (fun item -> item.Item.info.name)
         |> String.concat ", "
       in
       let deleting_file_format =
@@ -126,15 +123,14 @@ let run delete_cmd =
       let confirmed_deletion =
         Input.confirm_choice
           ~continue_on_wrong_input:(Input.Continue (Some "Wrong input"))
-          ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:deleting_file_format
-          ()
+          ~case_insensible:true ~yes:'y' ~no:'n' ~prompt:deleting_file_format ()
       in
       if confirmed_deletion then
         let () =
           deleted_files_info
           |> List.iter (fun file_info ->
                  let pathbuf =
-                   Path.push file_info.Items.External.encrypted_file_name
+                   Path.push file_info.Item.encrypted_file_name
                      App.AppLocation.hisoka_data_dir
                  in
                  let path = Path.to_string pathbuf in

@@ -15,28 +15,16 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module Info = struct
-  type info = { groups : string list; name : string } [@@deriving yojson]
+type t = { iv : string; info : Info.t; encrypted_file_name : string }
+[@@deriving yojson]
 
-  let create ~groups name = { groups; name }
-end
+let compare lhs rhs = compare lhs.info rhs.info
 
-module External = struct
-  type external_item = {
-    iv : string;
-    info : Info.info;
-    encrypted_file_name : string;
-  }
-  [@@deriving yojson]
+let create ?iv ~groups ~name encrypted_file_name =
+  let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in
+  { iv; info = Info.create ~groups name; encrypted_file_name }
 
-  let compare lhs rhs = compare lhs.info rhs.info
+let to_string item = item |> to_yojson |> Yojson.Safe.to_string
 
-  let create ?iv ~groups ~name encrypted_file_name =
-    let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in
-    { iv; info = Info.create ~groups name; encrypted_file_name }
-
-  let to_string item = item |> external_item_to_yojson |> Yojson.Safe.to_string
-
-  let of_string bytes =
-    bytes |> Yojson.Safe.from_string |> external_item_of_yojson |> Result.get_ok
-end
+let of_string bytes =
+  bytes |> Yojson.Safe.from_string |> of_yojson |> Result.get_ok
