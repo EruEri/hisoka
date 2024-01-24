@@ -52,8 +52,7 @@ module External_Manager = struct
   let encrypt ~key external_manager () =
     let data = to_string external_manager in
     let where =
-      Option.some
-      @@ Util.Path.to_string App.AppLocation.hisoka_extern_config_file
+      Option.some @@ Util.Path.to_string Config.hisoka_extern_config_file
     in
     Encryption.encrypt ~where ~key ~iv:encryption_iv data ()
 
@@ -135,7 +134,7 @@ module External_Manager = struct
     ({ external_items }, deleted)
 
   let decrypt ~key () =
-    let path = Util.Path.to_string App.AppLocation.hisoka_extern_config_file in
+    let path = Util.Path.to_string Config.hisoka_extern_config_file in
     match Encryption.decrpty_file ~key ~iv:encryption_iv path () with
     | Error exn ->
         raise exn
@@ -177,8 +176,7 @@ module Manager = struct
            let open Item in
            let input_files_data =
              Util.Path.to_string
-             @@ Util.Path.push ei.encrypted_file_name
-                  App.AppLocation.hisoka_data_dir
+             @@ Util.Path.push ei.encrypted_file_name Config.hisoka_data_dir
            in
            let data =
              Encryption.decrpty_file ~key ~iv:ei.iv input_files_data ()
@@ -246,7 +244,7 @@ module Manager = struct
              let input_files_data =
                Util.Path.to_string
                @@ Util.Path.push external_item.encrypted_file_name
-                    App.AppLocation.hisoka_data_dir
+                    Config.hisoka_data_dir
              in
              let data =
                Encryption.decrpty_file ~key ~iv:external_item.iv
@@ -269,7 +267,7 @@ module Manager = struct
   let is_empty manager = manager.external_manager.external_items = []
 
   let encrypt ~max_iter ~raise_on_conflicts ~key manager () =
-    let path = App.AppLocation.hisoka_data_dir in
+    let path = Config.hisoka_data_dir in
     let good_files, commit_conficts =
       manager.register_external_change
       |> List.partition_map (fun commit ->
@@ -310,7 +308,7 @@ module Manager = struct
       to_encrypted_data
       |> List.iter (fun (encrypted_name, iv, plain_data) ->
              let where =
-               App.AppLocation.hisoka_data_dir
+               Config.hisoka_data_dir
                |> Util.Path.push encrypted_name
                |> Util.Path.to_string |> Option.some
              in

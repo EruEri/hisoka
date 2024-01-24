@@ -15,16 +15,13 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module App = struct
-  let is_app_folder_exist =
-    let open Config in
-    let app_path = Util.Path.to_string hisoka_dir in
-    Sys.file_exists app_path
-
-  let check_app_initialized () =
-    let () =
-      if not is_app_folder_exist then
-        raise Error.(HisokaError HisokaNotInitialized)
-    in
-    ()
-end
+let hisoka = "hisoka"
+let ( // ) = Filename.concat
+let xdg = Xdg.create ~env:Sys.getenv_opt ()
+let xdg_data = Xdg.data_dir xdg
+let hisoka_dir = xdg_data // hisoka
+let data_folder = ".data"
+let hisoka_rc = ".hisokarc"
+let hisoka_dir = Util.Path.from_list [ hisoka_dir ]
+let hisoka_extern_config_file = Util.Path.push hisoka_rc hisoka_dir
+let hisoka_data_dir = Util.Path.push data_folder hisoka_dir

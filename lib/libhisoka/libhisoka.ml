@@ -21,3 +21,4 @@ module Input = Input
 module Error = Error
 module Item = Item
 module Info = Info
+module Config = Config

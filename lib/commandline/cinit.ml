@@ -39,7 +39,7 @@ let cmd run =
   Cmd.v info (cmd_term run)
 
 let run cmd_init =
-  let open App.AppLocation in
+  let open Config in
   let open Util.FileSys in
   let force = cmd_init.force in
   let ( >>= ) = Result.bind in
