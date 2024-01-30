@@ -67,7 +67,7 @@ let rec confirm_choice :
       else if choice = s_no then
         false
       else
-        let () = message |> Option.iter (fun s -> Printf.printf "%s\n" s) in
+        let () = Option.iter (Printf.printf "%s\n") message in
         confirm_choice ~continue_on_wrong_input ~case_insensible ~yes ~no
           ~prompt ()
   | Stop_Wrong message ->
@@ -76,5 +76,5 @@ let rec confirm_choice :
       else if choice = s_no then
         Some false
       else
-        let () = message |> Option.iter (fun s -> Printf.printf "%s\n" s) in
+        let () = Option.iter (fun s -> Printf.printf "%s\n" s) message in
         None

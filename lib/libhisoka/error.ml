@@ -60,8 +60,18 @@ let string_of_error = function
       in
       Printf.sprintf "The following group%s %s exist: [%s]" s does
         (String.concat ", " groups)
-  | ExistingFiles _ ->
-      "Dummy"
+  | ExistingFiles commits ->
+      let s, does =
+        match commits with
+        | [] | _ :: [] ->
+            ("", "doesn't")
+        | _ ->
+            ("s", "don't")
+      in
+      Printf.sprintf "The following name%s hash %s exist: [%s]" s does
+        (String.concat ", "
+        @@ List.map (fun commit -> commit.Commit.name) commits
+        )
 
 exception HisokaError of error
 

@@ -62,7 +62,7 @@ let encrypt_manager ~key manager =
 
 let decrypt ~key () =
   let path = Util.Path.to_string Config.hisoka_extern_config_file in
-  match Encryption.decrpty_file ~key ~iv:encryption_iv path () with
+  match Encryption.decrpty_file ~key ~iv:encryption_iv path with
   | Error exn ->
       raise exn
   | Ok None ->
@@ -222,7 +222,7 @@ let decrypt_all ~key dir_path manager =
         @@ Util.Path.push item.encrypted_file_name Config.hisoka_data_dir
       in
       let decrypted_data =
-        Encryption.decrpty_file ~key ~iv:item.iv encrypted_file ()
+        Encryption.decrpty_file ~key ~iv:item.iv encrypted_file
       in
       match decrypted_data with
       | Error exn ->

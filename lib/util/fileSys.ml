@@ -36,8 +36,10 @@ let create_file ?(on_file = fun _ -> ()) ~on_error file =
 let rec rmrf path () =
   match Sys.is_directory path with
   | true ->
-      Sys.readdir path
-      |> Array.iter (fun name -> rmrf (Filename.concat path name) ());
+      let () =
+        Array.iter (fun name -> rmrf (Filename.concat path name) ())
+        @@ Sys.readdir path
+      in
       Unix.rmdir path
   | false ->
       Sys.remove path
