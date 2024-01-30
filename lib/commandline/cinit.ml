@@ -24,15 +24,15 @@ type cmd_init = { force : bool }
 type t = cmd_init
 
 let force_term =
-  let info = Arg.info [ "f"; "force" ] ~doc:"force the initialisation" in
+  let info = Arg.info [ "f"; "force" ] ~doc:"force the initialization" in
   Arg.value (Arg.flag info)
 
 let cmd_term run =
   let combine force = run @@ { force } in
   Term.(const combine $ force_term)
 
-let cmd_doc = "Initialise hisoka app"
-let cmd_man = [ `S Manpage.s_description; `P "Initialise hisoka app" ]
+let cmd_doc = "Initialise hisoka"
+let cmd_man = [ `S Manpage.s_description; `P "Initialise hisoka" ]
 
 let cmd run =
   let info = Cmd.info name ~doc:cmd_doc ~man:cmd_man in
