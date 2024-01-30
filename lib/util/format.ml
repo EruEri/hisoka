@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,28 +15,11 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-module Info = struct
-  type info = { groups : string list; name : string } [@@deriving yojson]
-
-  let create ~groups name = { groups; name }
-end
-
-module External = struct
-  type external_item = {
-    iv : string;
-    info : Info.info;
-    encrypted_file_name : string;
-  }
-  [@@deriving yojson]
-
-  let compare lhs rhs = compare lhs.info rhs.info
-
-  let create ?iv ~groups ~name encrypted_file_name =
-    let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in
-    { iv; info = Info.create ~groups name; encrypted_file_name }
-
-  let to_string item = item |> external_item_to_yojson |> Yojson.Safe.to_string
-
-  let of_string bytes =
-    bytes |> Yojson.Safe.from_string |> external_item_of_yojson |> Result.get_ok
-end
+let string_of_enum ?(splitter = "|") ?(quoted = false) enum =
+  let f =
+    if quoted then
+      Cmdliner.Arg.doc_quote
+    else
+      Fun.id
+  in
+  enum |> List.map (fun (elt, _) -> f elt) |> String.concat splitter

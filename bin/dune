@@ -1,4 +1,4 @@
 (executable
  (public_name hisoka)
  (name hisoka)
- (libraries libhisoka cmdliner))
+ (libraries commandline))

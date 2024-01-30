@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,52 +15,29 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let uint_8_max = 256
-let iv_size = 12
+open Cmdliner
+open Util
 
-let aes_string_encrypt s () =
-  let aes = Cryptokit.Hash.sha256 () in
-  let _ = aes#add_string s in
-  aes#result
+let file_term ~docv ~doc =
+  let linfo = Arg.info [] ~docv ~doc in
+  Arg.(non_empty & pos_all non_dir_file [] & linfo)
 
-let default_iv = String.init iv_size (fun _ -> Char.chr 0)
+let groups_term ~docv ~doc =
+  let ginfo = Arg.info [ "g"; "group" ] ~docv ~doc in
+  Arg.(value & opt_all string [] & ginfo)
 
-let random_iv () =
-  String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr)
-
-let encrypt ?(where = None) ~key ~iv data =
-  let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
-  let encrypted_data = Cryptokit.auth_transform_string e data in
-  match where with
-  | None ->
-      encrypted_data
-  | Some where ->
-      let () =
-        Out_channel.with_open_bin where (fun channel ->
-            output_string channel encrypted_data
-        )
-      in
-      encrypted_data
-
-let encrypt_file ?(where = None) ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (encrypt ~where ~key ~iv raw_data)
-
-let decrypt ~key ~iv data =
-  let d = Cryptokit.AEAD.(aes_gcm key ~iv Decrypt) in
-  let decrypted_data = Cryptokit.auth_check_transform_string d data in
-  decrypted_data
-
-let decrpty_file ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (decrypt ~key ~iv raw_data)
+let stragtegy_group_term =
+  let default = Some Util.Strategy.All in
+  Arg.(
+    required
+    & opt ~vopt:default (some & enum Strategy.strategy_group_enum) default
+    & info
+        ~docv:(Format.string_of_enum Strategy.strategy_group_enum)
+        ~doc:
+          "the filter strategy to apply. \"any\" matches if at least one of \
+           the given groups belongs to the group of the file. \"all\" matches \
+           if all the given groups belongs to the group of the file.  \
+           \"exact\" matches if exactly all the given groups are the same \
+           groups as the file"
+        [ "s"; "strategy" ]
+  )

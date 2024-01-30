@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,52 +15,33 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let uint_8_max = 256
-let iv_size = 12
+let create_folder ?(perm = 0o700) ~on_error folder =
+  let to_path_string = Path.to_string folder in
+  match Sys.mkdir to_path_string perm with
+  | exception _ ->
+      Error on_error
+  | () ->
+      Ok folder
 
-let aes_string_encrypt s () =
-  let aes = Cryptokit.Hash.sha256 () in
-  let _ = aes#add_string s in
-  aes#result
+let create_file ?(on_file = fun _ -> ()) ~on_error file =
+  let to_file_path = Path.to_string file in
+  match Out_channel.open_bin to_file_path with
+  | exception _ ->
+      Error on_error
+  | outchan ->
+      let () = on_file outchan in
+      let () = close_out outchan in
+      Ok file
 
-let default_iv = String.init iv_size (fun _ -> Char.chr 0)
-
-let random_iv () =
-  String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr)
-
-let encrypt ?(where = None) ~key ~iv data =
-  let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
-  let encrypted_data = Cryptokit.auth_transform_string e data in
-  match where with
-  | None ->
-      encrypted_data
-  | Some where ->
+let rec rmrf path () =
+  match Sys.is_directory path with
+  | true ->
       let () =
-        Out_channel.with_open_bin where (fun channel ->
-            output_string channel encrypted_data
-        )
+        Array.iter (fun name -> rmrf (Filename.concat path name) ())
+        @@ Sys.readdir path
       in
-      encrypted_data
-
-let encrypt_file ?(where = None) ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (encrypt ~where ~key ~iv raw_data)
-
-let decrypt ~key ~iv data =
-  let d = Cryptokit.AEAD.(aes_gcm key ~iv Decrypt) in
-  let decrypted_data = Cryptokit.auth_check_transform_string d data in
-  decrypted_data
-
-let decrpty_file ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (decrypt ~key ~iv raw_data)
+      Unix.rmdir path
+  | false ->
+      Sys.remove path
+  | exception e ->
+      raise e

@@ -90,66 +90,20 @@ OPTIONS
            file
 ```
 
-### - **Display**
-To directly show image files in your terminal, use the ```display``` subcommand
-
-Use 'l' to switch to the next image, 'j' for the previous one and 'q' to quit. 
-```
-NAME
-       hisoka-display - Display files in the terminals
-
-SYNOPSIS
-       hisoka display [--group=GROUP] [--mode[=Pixel Mode]]
-       [--strategy[=any|all|exact]] [OPTION]… [FILES]…
-
-DESCRIPTION
-       Display allows you to show files within hisoka directly in the
-       terminal
-
-ARGUMENTS
-       FILES
-           Files to display
-
-OPTIONS
-       -g GROUP, --group=GROUP
-           Render files belonging to GROUP
-
-       -m [Pixel Mode], --mode[=Pixel Mode] (default=none) (required)
-           Specify the pixel mode to use to render the image. one of 'iterm',
-           'kitty', 'sixel' or 'none'
-
-       -s [any|all|exact], --strategy[=any|all|exact] (default=all)
-       (required)
-           the filter strategy to apply. "any" matches if at least one of the
-           given groups belongs to the group of the file. "all" matches if
-           all the given groups belongs to the group of the file. "exact"
-           matches if exactly all the given groups are the same groups as the
-           file
-```
-
 ### - **Other**
 There are other subcommands but those 3 explain pretty much how hisoka works.
 
 
 ## How to build
-- First you will need to install those opam packages.
-    ```sh
-    $ opam install cryptokit dune xdg yojson cmdliner ppx_deriving_yojson
-    ```
+First you will need to install those opam packages.
+```sh
+$ opam install cryptokit dune xdg yojson cmdliner ppx_deriving_yojson
+```
 
-- You will also need to install those C libraries:
-  - [Chafa](https://github.com/hpjansson/chafa)
-    - Chafa >= 1.12.4
-  - [ImageMagick](https://github.com/imagemagick/imagemagick)
-    - ImageMagick >= 7.0.0
-    
-  The C libraries must be able to be found by **pkg-config**
-
-- And finally:
-  ```sh
-  git clone https://github.com/EruEri/hisoka
-  cd hisoka
-  dune build
-  ```
+```sh
+git clone https://github.com/EruEri/hisoka
+cd hisoka
+dune build
+```
 
 

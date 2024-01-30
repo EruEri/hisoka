@@ -19,23 +19,16 @@
 
 (library
  (name cbindings)
- (install_c_headers display termove)
  (foreign_stubs
   (language c)
-  (names input display termove)
-  (flags
-   (:include cflags_chafa.sexp)
-   (:include cflags_MagickWand.sexp)
-   (-fPIC)))
- (c_library_flags
-  (:include clibrary_flags_chafa.sexp)
-  (:include clibrary_flags_MagickWand.sexp)))
+  (names input)
+  (flags (-fPIC) (-std=c99))))
 
-(rule
- (targets
-  cflags_chafa.sexp
-  clibrary_flags_chafa.sexp
-  cflags_MagickWand.sexp
-  clibrary_flags_MagickWand.sexp)
- (action
-  (run ./config/discover.exe)))
+; (rule
+;  (targets
+;   cflags_chafa.sexp
+;   clibrary_flags_chafa.sexp
+;   cflags_MagickWand.sexp
+;   clibrary_flags_MagickWand.sexp)
+;  (action
+;   (run ./config/discover.exe)))

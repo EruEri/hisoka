@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,13 +15,9 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-type pathbuf = string list
-
-let pop : pathbuf -> pathbuf = List.tl
-let push : string -> pathbuf -> pathbuf = List.cons
-let to_string pathbuf = pathbuf |> List.rev |> String.concat Filename.dir_sep
-let create name : pathbuf = [ name ]
-let from_list l = l |> List.rev
-
-let exists_in ~file ~pathbuf =
-  Sys.file_exists (pathbuf |> push file |> to_string)
+type t = {
+  groups : string list;
+  name : string;
+  extension : string;
+  path : string;
+}

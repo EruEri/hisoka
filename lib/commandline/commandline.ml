@@ -1,7 +1,7 @@
 (**********************************************************************************************)
 (*                                                                                            *)
 (* This file is part of Hisoka                                                                *)
-(* Copyright (C) 2023 Yves Ndiaye                                                             *)
+(* Copyright (C) 2024 Yves Ndiaye                                                             *)
 (*                                                                                            *)
 (* Hisoka is free software: you can redistribute it and/or modify it under the terms          *)
 (* of the GNU General Public License as published by the Free Software Foundation,            *)
@@ -15,52 +15,49 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let uint_8_max = 256
-let iv_size = 12
+open Cmdliner
 
-let aes_string_encrypt s () =
-  let aes = Cryptokit.Hash.sha256 () in
-  let _ = aes#add_string s in
-  aes#result
-
-let default_iv = String.init iv_size (fun _ -> Char.chr 0)
-
-let random_iv () =
-  String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr)
-
-let encrypt ?(where = None) ~key ~iv data =
-  let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
-  let encrypted_data = Cryptokit.auth_transform_string e data in
-  match where with
+let version =
+  match Build_info.V1.version () with
   | None ->
-      encrypted_data
-  | Some where ->
-      let () =
-        Out_channel.with_open_bin where (fun channel ->
-            output_string channel encrypted_data
-        )
-      in
-      encrypted_data
+      "n/a"
+  | Some v ->
+      Build_info.V1.Version.to_string v
 
-let encrypt_file ?(where = None) ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (encrypt ~where ~key ~iv raw_data)
+let root_doc = "the encrypted-file manager"
 
-let decrypt ~key ~iv data =
-  let d = Cryptokit.AEAD.(aes_gcm key ~iv Decrypt) in
-  let decrypted_data = Cryptokit.auth_check_transform_string d data in
-  decrypted_data
+type t = bool
 
-let decrpty_file ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (decrypt ~key ~iv raw_data)
+let change_term =
+  Arg.(
+    value & flag
+    & info [ "change-master-password" ] ~doc:"Change the master password"
+  )
+
+let cmd_term run =
+  let combine change = run @@ change in
+  Term.(const combine $ change_term)
+
+let run_base change_password =
+  ignore change_password;
+  ()
+
+let root_man =
+  [
+    `S Manpage.s_description;
+    `P "hisoka allows you to store any files by encrypting them";
+  ]
+
+let root_info = Cmd.info "hisoka" ~doc:root_doc ~man:root_man ~version
+
+let subcommands =
+  [
+    Cinit.command;
+    Cadd.command;
+    Clist.command;
+    Cdecrypt.command;
+    Cdelete.command;
+  ]
+
+let parse () = Cmd.group ~default:(cmd_term run_base) root_info subcommands
+let eval () = () |> parse |> Cmd.eval

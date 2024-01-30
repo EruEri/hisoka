@@ -18,15 +18,3 @@
 module Input = struct
   external getpass : string -> unit -> string = "caml_get_pass"
 end
-
-module Display = struct
-  type pixel_mode = Iterm | Kitty | SIXEL | NONE
-
-  external hisoka_show :
-    (string * string) list -> int -> pixel_mode -> unit -> unit
-    = "caml_hisoka_show"
-end
-
-module Chafa_Test = struct
-  external chafa_display : string -> unit -> unit = "caml_chafa_test"
-end

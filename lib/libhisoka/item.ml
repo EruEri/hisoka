@@ -15,52 +15,18 @@
 (*                                                                                            *)
 (**********************************************************************************************)
 
-let uint_8_max = 256
-let iv_size = 12
+type t = { iv : string; info : Info.t; encrypted_file_name : string }
+[@@deriving yojson]
 
-let aes_string_encrypt s () =
-  let aes = Cryptokit.Hash.sha256 () in
-  let _ = aes#add_string s in
-  aes#result
+let compare lhs rhs = compare lhs.info rhs.info
 
-let default_iv = String.init iv_size (fun _ -> Char.chr 0)
+let create ?iv ~groups ~name encrypted_file_name =
+  let iv = match iv with Some iv -> iv | None -> Encryption.random_iv () in
+  { iv; info = Info.create ~groups name; encrypted_file_name }
 
-let random_iv () =
-  String.init iv_size (fun _ -> uint_8_max |> Random.full_int |> Char.chr)
+let to_string item = item |> to_yojson |> Yojson.Safe.to_string
 
-let encrypt ?(where = None) ~key ~iv data =
-  let e = Cryptokit.AEAD.(aes_gcm key ~iv Encrypt) in
-  let encrypted_data = Cryptokit.auth_transform_string e data in
-  match where with
-  | None ->
-      encrypted_data
-  | Some where ->
-      let () =
-        Out_channel.with_open_bin where (fun channel ->
-            output_string channel encrypted_data
-        )
-      in
-      encrypted_data
+let of_string bytes =
+  bytes |> Yojson.Safe.from_string |> of_yojson |> Result.get_ok
 
-let encrypt_file ?(where = None) ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (encrypt ~where ~key ~iv raw_data)
-
-let decrypt ~key ~iv data =
-  let d = Cryptokit.AEAD.(aes_gcm key ~iv Decrypt) in
-  let decrypted_data = Cryptokit.auth_check_transform_string d data in
-  decrypted_data
-
-let decrpty_file ~key ~iv file =
-  match open_in_bin file with
-  | exception exn ->
-      Error exn
-  | file ->
-      let raw_data = Util.Io.read_file file in
-      let () = close_in file in
-      Ok (decrypt ~key ~iv raw_data)
+let info item = item.info
