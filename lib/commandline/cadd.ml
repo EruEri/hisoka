@@ -81,9 +81,9 @@ let run cmd_add =
     Libhisoka.Input.ask_password_encrypted
       ~prompt:"Enter the master password : " ()
   in
-  let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+  let manager = Manager.decrypt ~key:encrypted_key () in
 
-  let managers_groups = StringSet.of_list @@ Manager.Manager.groups manager in
+  let managers_groups = StringSet.of_list @@ Manager.groups manager in
   let futures_groups = StringSet.of_list existing_groups in
 
   let diff = StringSet.diff futures_groups managers_groups in
@@ -101,23 +101,19 @@ let run cmd_add =
     |> List.rev_append existing_groups
     |> StringSet.of_list |> StringSet.elements
   in
-  let manager =
-    files
-    |> List.fold_left
-         (fun manager file ->
-           let name, extension =
-             (Filename.basename file, Filename.extension file)
-           in
-           Manager.Manager.add_item_from_file ~groups ~name ~extension
-             ~file_name:file manager
-         )
-         manager
+  let commits =
+    List.fold_left
+      (fun commits filename ->
+        let name = Filename.basename filename in
+        let extension = Filename.extension filename in
+        let commit = Manager.change groups name extension filename in
+        commit :: commits
+      )
+      [] files
   in
   let () =
-    Manager.Manager.encrypt ~key:encrypted_key ~max_iter:3
-      ~raise_on_conflicts:true manager ()
+    ignore @@ Manager.encrypt_with_changes ~key:encrypted_key commits manager
   in
-
   let () =
     List.iter
       (fun f ->

@@ -29,6 +29,7 @@ type error =
   | CreateFileError of Path.t
   | EncryptionError of Path.t
   | NoneExistingGroup of string list
+  | ExistingFiles of Commit.t list
 
 let string_of_error = function
   | HisokaNotInitialized ->
@@ -59,6 +60,8 @@ let string_of_error = function
       in
       Printf.sprintf "The following group%s %s exist: [%s]" s does
         (String.concat ", " groups)
+  | ExistingFiles _ ->
+      "Dummy"
 
 exception HisokaError of error
 

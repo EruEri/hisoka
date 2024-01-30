@@ -88,17 +88,14 @@ let run decrypt_cmd =
   let encrypted_key =
     Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
   in
-  let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+  let manager = Manager.decrypt ~key:encrypted_key () in
   let manager_filtered =
-    Manager.Manager.fetch_group_files ~strategy ~groups ~files manager
+    Manager.filter (Util.Strategy.fstrategy strategy) groups files manager
   in
-  match Manager.Manager.is_empty manager_filtered with
+  match Manager.is_empty manager_filtered with
   | false ->
       let outdir = Option.value ~default:(Sys.getcwd ()) out_dir in
-      let () =
-        Manager.Manager.decrypt_files ~dir_path:outdir ~key:encrypted_key
-          manager_filtered ()
-      in
+      let () = Manager.decrypt_all ~key:encrypted_key outdir manager_filtered in
       ()
   | true ->
       raise Error.(HisokaError NoFileToDecrypt)

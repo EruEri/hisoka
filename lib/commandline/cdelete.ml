@@ -103,9 +103,9 @@ let run delete_cmd =
   let encrypted_key =
     Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
   in
-  let manager = Manager.Manager.decrypt ~key:encrypted_key () in
+  let manager = Manager.decrypt ~key:encrypted_key () in
   let filtered_manager, deleted_files_info =
-    Manager.Manager.remove ~strategy ~groups files manager
+    Manager.remove strategy groups files manager
   in
   match deleted_files_info with
   | [] ->
@@ -127,19 +127,20 @@ let run delete_cmd =
       in
       if confirmed_deletion then
         let () =
-          deleted_files_info
-          |> List.iter (fun file_info ->
-                 let pathbuf =
-                   Path.push file_info.Item.encrypted_file_name
-                     Config.hisoka_data_dir
-                 in
-                 let path = Path.to_string pathbuf in
-                 Util.FileSys.rmrf path ()
-             )
+          List.iter
+            (fun file_info ->
+              let pathbuf =
+                Path.push file_info.Item.encrypted_file_name
+                  Config.hisoka_data_dir
+              in
+              let path = Path.to_string pathbuf in
+              Util.FileSys.rmrf path ()
+            )
+            deleted_files_info
         in
         let () =
-          Manager.Manager.encrypt ~max_iter:3 ~raise_on_conflicts:true
-            ~key:encrypted_key filtered_manager ()
+          ignore
+          @@ Manager.encrypt_with_changes ~key:encrypted_key [] filtered_manager
         in
         Printf.printf "Deleted : %s\n" string_of_files
       else

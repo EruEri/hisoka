@@ -69,10 +69,8 @@ let run cmd_init =
     create_folder ~on_error:(Error.CreateFolderError hisoka_dir) hisoka_dir
     >>= fun app_dir ->
     let external_file_path = Util.Path.push hisoka_rc app_dir in
-    let external_manager = Manager.External_Manager.create in
-    let data =
-      Manager.External_Manager.encrypt ~key:encrypted_key external_manager ()
-    in
+    let manager = Manager.empty in
+    let data = Manager.encrypt_with_changes ~key:encrypted_key [] manager in
     create_file
       ~on_file:(fun oc -> output_string oc data)
       ~on_error:(Error.CreateFileError external_file_path) external_file_path

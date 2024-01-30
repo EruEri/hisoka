@@ -61,8 +61,8 @@ let run cmd_list =
   let encrypted_key =
     Input.ask_password_encrypted ~prompt:"Enter the master password : " ()
   in
-  let manager = Manager.Manager.decrypt ~key:encrypted_key () in
-  let items_list = Manager.Manager.infos manager in
+  let manager = Manager.decrypt ~key:encrypted_key () in
+  let items_list = Manager.infos manager in
   let items_list =
     match groups with
     | [] ->
