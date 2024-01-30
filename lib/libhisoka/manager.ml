@@ -82,21 +82,27 @@ let decrypt ~key () =
 let filter fstrategy groups files manager =
   let open Item in
   let exists item = List.exists (( = ) item.info.name) in
+  let filter exist groups item =
+    match groups with
+    | [] ->
+        exist
+    | groups ->
+        let egroups = StringSet.of_list item.info.groups in
+        let filter_groups = StringSet.of_list groups in
+        fstrategy filter_groups egroups && exist
+  in
   match (groups, files) with
   | [], [] ->
       manager
+  | (_ :: _ as groups), [] ->
+      let items = ItemSet.filter (filter true groups) manager.items in
+      { items }
   | groups, files ->
       let items =
         ItemSet.filter
           (fun item ->
             let exist = exists item files in
-            match groups with
-            | [] ->
-                exist
-            | groups ->
-                let egroups = StringSet.of_list item.info.groups in
-                let filter_groups = StringSet.of_list groups in
-                fstrategy filter_groups egroups && exist
+            filter exist groups item
           )
           manager.items
       in
@@ -105,7 +111,7 @@ let filter fstrategy groups files manager =
 let exclude fstrategy groups files manager =
   let open Info in
   let open Item in
-  let exists item = List.exists (( = ) item.info.name) files in
+  let exists item = files = [] || List.exists (( = ) item.info.name) files in
   let items, deleted =
     ItemSet.partition
       (fun item ->
